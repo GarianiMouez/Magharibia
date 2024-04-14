@@ -1,0 +1,75 @@
+const defaultColumns = [
+  // {
+  //   flex: 0.1,
+  //   minWidth: 80,
+  //   field: 'invoiceStatus',
+  //   renderHeader: () => <Icon icon='tabler:trending-up' />,
+  //   renderCell: ({ row }) => {
+  //     const { dueDate, balance, invoiceStatus } = row
+  //     const color = invoiceStatusObj[invoiceStatus] ? invoiceStatusObj[invoiceStatus].color : 'primary'
+
+  //     return (
+  //       <Tooltip
+  //         title={
+  //           <div>
+  //             <Typography variant='caption' sx={{ color: 'common.white', fontWeight: 600 }}>
+  //               {invoiceStatus}
+  //             </Typography>
+  //             <br />
+  //             <Typography variant='caption' sx={{ color: 'common.white', fontWeight: 600 }}>
+  //               Balance:
+  //             </Typography>{' '}
+  //             {balance}
+  //             <br />
+  //             <Typography variant='caption' sx={{ color: 'common.white', fontWeight: 600 }}>
+  //               Due Date:
+  //             </Typography>{' '}
+  //             {dueDate}
+  //           </div>
+  //         }
+  //       >
+  //         <CustomAvatar skin='light' color={color} sx={{ width: '1.875rem', height: '1.875rem' }}>
+  //           {/* <Icon icon={invoiceStatusObj[invoiceStatus].icon} /> */}
+  //         </CustomAvatar>
+  //       </Tooltip>
+  //     )
+  //   }
+  // },
+  {
+    flex: 0.25,
+    field: 'Fname',
+    minWidth: 150,
+    headerName: 'Prénom'
+  },
+  {
+    flex: 0.25,
+    field: 'Lname',
+    minWidth: 150,
+    headerName: 'Nom'
+  },
+  {
+    flex: 0.25,
+    field: 'email',
+    minWidth: 150,
+    headerName: 'E-mail'
+  },
+  {
+    flex: 0.25,
+    field: 'cin',
+    minWidth: 100,
+    headerName: 'CIN'
+  },
+  {
+    flex: 0.25,
+    field: 'tlf',
+    minWidth: 100,
+    headerName: 'Téléphone'
+  },
+  {
+    flex: 0.25,
+    field: 'city',
+    minWidth: 100,
+    headerName: 'Ville',
+    renderCell: ({ row }) => <Typography sx={{ color: 'text.secondary' }}>{row.city}</Typography>
+  }
+]

@@ -1,0 +1,59 @@
+{
+  // JS
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  // JSON
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  // Extension: Git
+  "git.rebaseWhenSync": true,
+  "git.autofetch": true,
+  "git.enableSmartCommit": true,
+  // Extension: Prettier
+  "prettier.requireConfig": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+  // Extension: ESLint
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "never"
+  },
+  "eslint.validate": [
+    "javascript",
+    "typescript",
+    "javascriptreact",
+    "typescriptreact"
+  ],
+  "eslint.format.enable": true,
+  // Package manager Configs
+  "eslint.packageManager": "yarn",
+  "npm.packageManager": "yarn",
+  // Extension: cSpell
+  "cSpell.words": [
+    "Customizer"
+  ],
+  "search-node-modules.path": "node_modules",
+  "markdown.extension.toc.updateOnSave": false,
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#2f7c47",
+    "activityBar.background": "#2f7c47",
+    "editorGroup.border": "#2f7c47",
+    "panel.border": "#2f7c47",
+    "sash.hoverBorder": "#2f7c47",
+    "sideBar.border": "#2f7c47",
+    "statusBar.background": "#215732",
+    "statusBar.border": "#215732",
+    "statusBar.debuggingBackground": "#572146",
+    "statusBar.debuggingBorder": "#572146",
+    "statusBarItem.hoverBackground": "#2f7c47",
+    "statusBarItem.remoteBackground": "#215732",
+    "tab.activeBorder": "#2f7c47",
+    "titleBar.activeBackground": "#215732",
+    "titleBar.border": "#215732",
+    "titleBar.inactiveBackground": "#21573299"
+  },
+  "peacock.color": "#215732"
+}
