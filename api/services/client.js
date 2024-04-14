@@ -53,7 +53,7 @@ const getById = async (id) => {
 };
 const getByUsername = async (username) => {
   try {
-    const result = await Admin.findOne({
+    const result = await Client.findOne({
       where: {
         username,
       },
@@ -65,9 +65,8 @@ const getByUsername = async (username) => {
 
         "username",
         "password",
-        "firstName",
-        "lastName",
-        "isSuperAdmin",
+        "tlf",
+        "cin",
         "email",
         "createdAt",
         "updatedAt",

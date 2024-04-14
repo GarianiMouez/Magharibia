@@ -41,9 +41,7 @@ const adminLocalHandler = async (username, password, done) => {
 const clientLocalHandler = async (username, password, done) => {
   try {
     const user = await clientServices.getByUsername(username);
-    console.lolg("eeeee");
     if (!user) {
-      console.log("assba");
       return done(null, false);
     }
     if (!(await checkPassword(password, user.password))) {
