@@ -7,7 +7,6 @@ const jwtHandler = async (payload, done) => {
     let user;
     if (payload.accountType === "ADMIN") {
       user = await adminServices.getById(payload.sub);
-      console.log(user);
     } else if (payload.accountType === "CLIENT") {
       user = await clientServices.getById(payload.sub);
     } else {
