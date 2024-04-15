@@ -96,7 +96,7 @@ const UserDropdown = props => {
       >
         <Avatar
           alt='John Doe'
-          src={user.Image ? 'http://localhost:4500/static/clients/' + user?.image : '/images/defaultUser.png'}
+          src={user.image ? 'http://localhost:4500/static/clients/' + user?.image : '/images/defaultUser.png'}
           onClick={handleDropdownOpen}
           sx={{ width: 38, height: 38 }}
         />
@@ -121,7 +121,7 @@ const UserDropdown = props => {
             >
               <Avatar
                 alt='John Doe'
-                src={user.Image ? 'http://localhost:4500/static/clients/' + user?.image : '/images/defaultUser.png'}
+                src={user.image ? 'http://localhost:4500/static/clients/' + user?.image : '/images/defaultUser.png'}
                 sx={{ width: '2.5rem', height: '2.5rem' }}
               />
             </Badge>

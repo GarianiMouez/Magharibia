@@ -84,10 +84,10 @@ const Dashboard = ({ ships, clients, campanies, netAmounts, totalAmounts }) => {
     },
     {
       flex: 0.25,
-      field: 'city',
+      field: 'City',
       minWidth: 100,
       headerName: 'Ville',
-      renderCell: ({ row }) => <Typography sx={{ color: 'text.secondary' }}>{row?.city}</Typography>
+      renderCell: ({ row }) => <Typography sx={{ color: 'text.secondary' }}>{row?.City}</Typography>
     }
   ]
 
@@ -141,7 +141,7 @@ const Dashboard = ({ ships, clients, campanies, netAmounts, totalAmounts }) => {
       row?.cin?.toString().toLowerCase().includes(value.toString().toLowerCase()) ||
       row?.tlf?.toString().toLowerCase().includes(value.toString().toLowerCase()) ||
       row?.email?.toLowerCase().includes(value.toLowerCase()) ||
-      row?.city?.toLowerCase().includes(value.toLowerCase())
+      row?.City?.toLowerCase().includes(value.toLowerCase())
   )
   return (
     <ApexChartWrapper>

@@ -1,6 +1,6 @@
 const axios = require('axios')
 
-const deleteFunction = async id => {
+const deleteShip = async id => {
   try {
     const res = await axios.delete(`http://localhost:4500/ship/${id}`)
     console.log('ship deleted:', res.data)
@@ -22,7 +22,7 @@ const fetchShip = async () => {
   }
 }
 
-const AddFunction = async body => {
+const addShip = async body => {
   try {
     const res = await axios.post(`http://localhost:4500/ship`, body)
     console.log('ship added:', res.data)
@@ -33,7 +33,7 @@ const AddFunction = async body => {
   }
 }
 
-const updateFunction = async (id, body) => {
+const updateShip = async (id, body) => {
   try {
     const res = await axios.put(`http://localhost:4500/ship/${id}`, body)
     console.log('ship updated:', res.data)
@@ -43,7 +43,7 @@ const updateFunction = async (id, body) => {
     return false
   }
 }
-const getByid = async id => {
+const getShipByid = async id => {
   try {
     const res = await axios.get(`http://localhost:4500/ship/${id}`)
     return res.data
@@ -53,9 +53,9 @@ const getByid = async id => {
 }
 
 module.exports = {
-  deleteFunction,
+  deleteShip,
   fetchShip,
-  AddFunction,
-  updateFunction,
-  getByid
+  addShip,
+  updateShip,
+  getShipByid
 }

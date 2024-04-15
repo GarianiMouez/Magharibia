@@ -14,28 +14,71 @@ import { styled } from '@mui/material/styles'
 import Typography from '@mui/material/Typography'
 import { DataGrid, gridColumnsTotalWidthSelector } from '@mui/x-data-grid'
 
+// ** Styled Components
+
+import { secondsInDay } from 'date-fns'
 import { useAuth } from 'src/hooks/useAuth'
+
+// ** Styled component for the link in the dataTable
+const LinkStyled = styled(Link)(({ theme }) => ({
+  textDecoration: 'none',
+  fontSize: theme.typography.body1.fontSize,
+  color: `${theme.palette.primary.main} !important`
+}))
+
+// ** renders client column
 
 const defaultColumns = [
   {
     flex: 0.25,
-    field: 'description',
+    field: 'SDate',
     minWidth: 150,
-    headerName: 'Description'
+    headerName: 'Début de Contrat'
   },
   {
     flex: 0.25,
-    field: 'mark',
+    field: 'EDate',
     minWidth: 150,
-    headerName: 'Marque'
+    headerName: 'Fin de Contrat'
   },
-  {
-    flex: 0.25,
-    field: 'name',
-    minWidth: 150,
-    headerName: 'Nom'
-  }
 
+  {
+    flex: 0.25,
+    field: 'Coqu',
+    minWidth: 20,
+    headerName: 'coqu'
+  },
+
+  {
+    flex: 0.25,
+    field: 'motor',
+    minWidth: 20,
+    headerName: 'Moteur'
+  },
+  {
+    flex: 0.25,
+    field: 'netAmount',
+    minWidth: 20,
+    headerName: 'Montant Net'
+  },
+  {
+    flex: 0.25,
+    field: 'totalAmount',
+    minWidth: 20,
+    headerName: 'Montant Total'
+  },
+  //   {
+  //     flex: 0.25,
+  //     field: 'clientName',
+  //     minWidth: 20,
+  //     headerName: 'client'
+  //   },
+  {
+    flex: 0.25,
+    field: 'shipName',
+    minWidth: 20,
+    headerName: 'Ship'
+  }
   // {
   //   flex: 0.25,
   //   field: 'City',
@@ -125,7 +168,7 @@ const InvoiceList = ({ apiData, clients }) => {
     <>
       <Grid container spacing={6}>
         <Grid item xs={12} sx={{ pt: theme => `${theme.spacing(8)} !important` }}>
-          <Typography variant='h6'>List des Bateaux</Typography>
+          <Typography variant='h6'>Contrats </Typography>
         </Grid>
         <Grid item xs={12}>
           <Grid container spacing={6}>
@@ -153,18 +196,34 @@ const InvoiceList = ({ apiData, clients }) => {
   )
 }
 
-export async function getStaticProps() {
+export const getStaticProps = async () => {
   try {
+    const contractsRes = await axios.get('http://localhost:4500/pcontract')
+    const clientsRes = await axios.get('http://localhost:4500/client')
     const shipsRes = await axios.get('http://localhost:4500/ship')
-    const apiData = shipsRes.data
+
+    const contracts = contractsRes.data
+    const clients = clientsRes.data
+    const ships = shipsRes.data
+
+    const result = contracts.map(contract => {
+      const ship = ships.find(ship => ship.id === contract.ShipId)
+      const client = clients.find(client => client.id === contract.ClientId)
+      return {
+        ...contract,
+        shipName: ship.name,
+        clientName: client.Fname + ' ' + client.Lname
+      }
+    })
 
     return {
       props: {
-        apiData: apiData
+        apiData: result,
+        clients
       }
     }
   } catch (error) {
-    console.error("Erreur lors de la récupération des données de l'API :", error)
+    console.error('Error fetching API data:', error)
     return {
       props: {
         apiData: []

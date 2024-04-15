@@ -130,10 +130,10 @@ const defaultColumns = [
   },
   {
     flex: 0.25,
-    field: 'city',
+    field: 'City',
     minWidth: 100,
     headerName: 'Ville',
-    renderCell: ({ row }) => <Typography sx={{ color: 'text.secondary' }}>{row.city}</Typography>
+    renderCell: ({ row }) => <Typography sx={{ color: 'text.secondary' }}>{row.City}</Typography>
   }
 ]
 /* eslint-disable */
@@ -211,7 +211,7 @@ const InvoiceList = ({ apiData }) => {
   const [selectedRows, setSelectedRows] = useState([])
   const [startDateRange, setStartDateRange] = useState(null)
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 5 })
-  const [city, setCity] = useState(null)
+  const [City, setCity] = useState(null)
   const [cp, setCp] = useState(null)
 
   // ** Hooks
@@ -234,7 +234,7 @@ const InvoiceList = ({ apiData }) => {
       row.cin.toString().toLowerCase().includes(value.toString().toLowerCase()) ||
       row.tlf.toString().toLowerCase().includes(value.toString().toLowerCase()) ||
       row.email.toLowerCase().includes(value.toLowerCase()) ||
-      row.city.toLowerCase().includes(value.toLowerCase())
+      row.City.toLowerCase().includes(value.toLowerCase())
   )
 
   const columns = [
@@ -448,7 +448,7 @@ const InvoiceList = ({ apiData }) => {
                           <Grid item xs={12}>
                             <CustomAutocomplete
                               options={cities}
-                              value={city}
+                              value={City}
                               isOptionEqualToValue={(option, value) => {
                                 return (
                                   option.City.toLowerCase() === value.City.toLowerCase() &&

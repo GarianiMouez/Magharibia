@@ -47,7 +47,7 @@ const clientLocalHandler = async (username, password, done) => {
     if (!(await checkPassword(password, user.password))) {
       return done(null, false);
     }
-    delete user.password;
+    // delete user.password;
     return done(null, user);
   } catch (error) {
     return done(error, false);

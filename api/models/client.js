@@ -15,7 +15,7 @@ const Client = sequelize.define("Client", {
     type: DataTypes.DATE,
     allowNull: true,
   },
-  Image: {
+  image: {
     type: DataTypes.STRING,
     allowNull: true,
   },
