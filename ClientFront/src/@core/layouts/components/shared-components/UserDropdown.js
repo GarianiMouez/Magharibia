@@ -96,7 +96,7 @@ const UserDropdown = props => {
       >
         <Avatar
           alt='John Doe'
-          src={'http://localhost:4500/static/admins/' + user?.image}
+          src={user.Image ? 'http://localhost:4500/static/clients/' + user?.image : '/images/defaultUser.png'}
           onClick={handleDropdownOpen}
           sx={{ width: 38, height: 38 }}
         />
@@ -121,12 +121,12 @@ const UserDropdown = props => {
             >
               <Avatar
                 alt='John Doe'
-                src={'http://localhost:4500/static/admins/' + user?.image}
+                src={user.Image ? 'http://localhost:4500/static/clients/' + user?.image : '/images/defaultUser.png'}
                 sx={{ width: '2.5rem', height: '2.5rem' }}
               />
             </Badge>
             <Box sx={{ display: 'flex', ml: 2.5, alignItems: 'flex-start', flexDirection: 'column' }}>
-              <Typography sx={{ fontWeight: 500 }}>{user.firstName + ' ' + user.lastName}</Typography>
+              <Typography sx={{ fontWeight: 500 }}>{user.Fname + ' ' + user.Lname}</Typography>
               <Typography variant='body2'>Client</Typography>
             </Box>
           </Box>
