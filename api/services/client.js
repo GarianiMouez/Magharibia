@@ -62,7 +62,9 @@ const getByUsername = async (username) => {
         "image",
         "Fname",
         "Lname",
-
+        "cp",
+        "City",
+        "adress",
         "username",
         "password",
         "tlf",

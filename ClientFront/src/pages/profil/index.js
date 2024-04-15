@@ -1,5 +1,6 @@
 // ** React Imports
 import { useState } from 'react'
+import cities from 'src/views/forms/form-wizard/data/index'
 
 // ** MUI Imports
 import Box from '@mui/material/Box'
@@ -30,6 +31,7 @@ import { useForm, Controller } from 'react-hook-form'
 // ** Icon Imports
 import Icon from 'src/@core/components/icon'
 import { useAuth } from 'src/hooks/useAuth'
+import CustomAutocomplete from 'src/@core/components/mui/autocomplete'
 
 const initialData = {
   id: '',
@@ -72,14 +74,31 @@ const ResetButtonStyled = styled(Button)(({ theme }) => ({
 
 const TabAccount = () => {
   const { logout, user } = useAuth()
-  console.log(user)
+
+  const displayData = () => {
+    let data = formData
+    data.City = city.City + ' ' + city.SubCity
+    data.cp = city.cp
+    console.log('image', imgSrc)
+    console.log('image2', image)
+    let dataToSubmit = new FormData()
+    // dataToSubmit.append(formData.)
+    console.log('inale Data', data)
+  }
 
   // ** State
   const [open, setOpen] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const [userInput, setUserInput] = useState('yes')
   const [formData, setFormData] = useState(user)
-  const [imgSrc, setImgSrc] = useState(!user.Image ? '/images/defaultUser.png ' : user.Image)
+  const initialCity = cities.find(
+    el => el.City.toLowerCase() + ' ' + el.SubCity.toLowerCase() === user.city.toLowerCase()
+  )
+  const [city, setCity] = useState(initialCity || null)
+  const [cp, setCp] = useState(initialCity || null)
+
+  const [imgSrc, setImgSrc] = useState(!user.Image ? '/images/defaultUser.png' : user.Image)
+  const [image, setImage] = useState()
   const [secondDialogOpen, setSecondDialogOpen] = useState(false)
 
   // ** Hooks
@@ -99,6 +118,7 @@ const TabAccount = () => {
   }
 
   const handleInputImageChange = file => {
+    setImage(file)
     const reader = new FileReader()
     const { files } = file.target
     if (files && files.length !== 0) {
@@ -209,7 +229,7 @@ const TabAccount = () => {
                     InputProps={{ startAdornment: <InputAdornment position='start'>+ 216</InputAdornment> }}
                   />
                 </Grid>
-
+                {/* 
                 <Grid item xs={12} sm={6}>
                   <CustomTextField
                     fullWidth
@@ -218,8 +238,29 @@ const TabAccount = () => {
                     value={formData.city}
                     onChange={e => handleFormChange('city', e.target.value)}
                   />
-                </Grid>
+                </Grid> */}
                 <Grid item xs={12} sm={6}>
+                  <CustomAutocomplete
+                    value={city}
+                    onChange={(option, val) => {
+                      setCity(val)
+                      setCp(val.cp)
+                    }}
+                    options={cities}
+                    id='autocomplete-size-medium-multi'
+                    getOptionLabel={option => option.City + ' ' + option.SubCity || ''}
+                    renderInput={params => (
+                      <CustomTextField
+                        {...params}
+                        size='small'
+                        label='Ville'
+                        placeholder='Ville'
+                        value={formData.city}
+                      />
+                    )}
+                  />
+                </Grid>
+                {/* <Grid item xs={12} sm={6}>
                   <CustomTextField
                     fullWidth
                     type='number'
@@ -228,7 +269,7 @@ const TabAccount = () => {
                     value={formData.cp}
                     onChange={e => handleFormChange('cp', e.target.value)}
                   />
-                </Grid>
+                </Grid> */}
                 <Grid item xs={12} sm={6}>
                   <CustomTextField
                     fullWidth
@@ -240,7 +281,13 @@ const TabAccount = () => {
                 </Grid>
 
                 <Grid item xs={12} sx={{ pt: theme => `${theme.spacing(6.5)} !important` }}>
-                  <Button variant='contained' sx={{ mr: 4 }}>
+                  <Button
+                    variant='contained'
+                    sx={{ mr: 4 }}
+                    onClick={() => {
+                      displayData()
+                    }}
+                  >
                     Enregistrer
                   </Button>
                   <Button
