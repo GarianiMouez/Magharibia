@@ -166,6 +166,26 @@ const TableHeader = props => {
                 <Grid item xs={12}>
                   <CustomTextField
                     fullWidth
+                    label='Identifiant'
+                    {...register('username', { required: true })}
+                    placeholder='Identifant'
+                    sx={{ position: 'relative' }}
+                  />
+                  {errors.username && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
+                </Grid>
+                <Grid item xs={12}>
+                  <CustomTextField
+                    fullWidth
+                    label='Mot de Passe'
+                    {...register('password', { required: true })}
+                    placeholder='Mot de passe'
+                    sx={{ position: 'relative' }}
+                  />
+                  {errors.password && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
+                </Grid>
+                <Grid item xs={12}>
+                  <CustomTextField
+                    fullWidth
                     label='Nom'
                     {...register('Lname', { required: true })}
                     placeholder='Nom'
