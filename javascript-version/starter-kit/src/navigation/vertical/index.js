@@ -28,14 +28,14 @@ const navigation = () => {
       path: '/client',
       action: 'read',
       subject: 'client-Liste',
-      title: 'Liste des Clients',
+      title: 'Personnes Physiques',
       icon: 'tabler:user-up'
     },
     {
       path: '/companies',
       action: 'read',
       subject: 'companies-Liste',
-      title: 'Liste des Entreprises',
+      title: 'Personnes Morales',
       icon: 'tabler:building-community'
     },
     {
@@ -49,14 +49,14 @@ const navigation = () => {
       path: '/pcontract',
       action: 'read',
       subject: 'pc-Liste',
-      title: 'Contrats des Clients',
+      title: 'Contrats Personnes Physiques',
       icon: 'mdi:folder-user'
     },
     {
       path: '/econtract',
       action: 'read',
       subject: 'ec-Liste',
-      title: 'Contrats des Entreprises',
+      title: 'Contrats Personnes Morales',
       icon: 'mdi:folder-home'
     }
   ]
