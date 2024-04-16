@@ -159,7 +159,7 @@ const PContractStepper = () => {
       setCin(client?.cin)
       setEmail(client?.email)
       setTlf(client?.tlf)
-      setCity(cities.find(el => (el.City + ' ' + el.SubCity).toLowerCase() == client?.city.toLowerCase()) ?? null)
+      setCity(cities.find(el => (el.City + ' ' + el.SubCity).toLowerCase() == client?.City.toLowerCase()) ?? null)
       // setCity(cities[0])
       setCp(client?.cp)
       setAdress(client?.adress)
@@ -622,7 +622,7 @@ const PContractStepper = () => {
                     onChange={(event, val) => {
                       if (val) {
                         setCity(val)
-                        selectedClient.cp(val?.cp)
+                        setCp(val?.cp)
                       }
                     }}
                     id='autocomplete-size-medium-multi'
@@ -633,7 +633,7 @@ const PContractStepper = () => {
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <CustomTextField
+                  <ReadTextField
                     fullWidth
                     label='Code postle'
                     value={cp}
