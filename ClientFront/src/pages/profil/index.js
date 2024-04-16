@@ -107,7 +107,6 @@ const TabAccount = () => {
     handleSubmit,
     formState: { errors }
   } = useForm({ defaultValues: { checkbox: false } })
-  const handleClose = () => setOpen(false)
 
   const handleInputImageChange = event => {
     const reader = new FileReader()
