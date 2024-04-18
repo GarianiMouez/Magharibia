@@ -130,13 +130,14 @@ const CustomInput = forwardRef((props, ref) => {
 })
 
 /* eslint-enable */
-const ShipList = ({ apiData, client }) => {
+const ShipList = ({ apiData, clients, campanies }) => {
   ///****DATA*****////
   const [filteredData, setFilteredData] = useState(apiData)
   const [mark, setMark] = useState(null)
   const [name, setName] = useState(null)
   const [description, setDescription] = useState(null)
-  const [clientId, setClientId] = useState(null)
+  const [ownerId, setownerId] = useState(null)
+  const [campanyId, setCampanyId] = useState(null)
 
   /// delete
   const [showDelete, setShowDelete] = useState(false)
@@ -174,7 +175,7 @@ const ShipList = ({ apiData, client }) => {
     }
   }
 
-  const addClinet = async data => {
+  const addShip = async data => {
     const add = await AddFunction(data)
     if (add) {
       const newData = await fetchShip()
@@ -184,7 +185,7 @@ const ShipList = ({ apiData, client }) => {
     }
   }
 
-  const updateClient = async (id, data) => {
+  const updateShip = async (id, data) => {
     const update = await updateFunction(id, data)
     if (update) {
       const newData = await fetchShip()
@@ -194,10 +195,10 @@ const ShipList = ({ apiData, client }) => {
   }
   const onSubmit = data => {
     setShowUpdate(false)
-    let submittedData = { ...data, ClientId: clientId }
+    let submittedData = { ...data, ownerId: ownerId }
     delete submittedData.client
 
-    updateClient(selectedShip?.id, submittedData)
+    updateShip(selectedShip?.id, submittedData)
     setSelectedShip(null)
 
     reset()
@@ -286,7 +287,7 @@ const ShipList = ({ apiData, client }) => {
                     value={value}
                     selectedRows={selectedRows}
                     handleFilter={handleFilter}
-                    Addship={addClinet}
+                    Addship={addShip}
                   />
                   <DataGrid
                     autoHeight
@@ -411,32 +412,61 @@ const ShipList = ({ apiData, client }) => {
                           </Grid>
 
                           <Grid item xs={12}>
-                            <CustomAutocomplete
-                              required
-                              options={client}
-                              value={selectedShip?.client || ''}
-                              onChange={(event, val) => {
-                                if (val) {
-                                  setSelectedShip(prevState => ({
-                                    ...prevState,
-                                    client: val
-                                  }))
-                                  setClientId(val.id)
-                                }
-                              }}
-                              id='autocomplete-size-medium-multi'
-                              getOptionLabel={option => option.Fname + ' ' + option.Lname || ''}
-                              renderInput={params => (
-                                <CustomTextField
-                                  required
-                                  {...params}
-                                  size='small'
-                                  label='Client'
-                                  placeholder='Client'
-                                  {...register('client', { required: true })}
-                                />
-                              )}
-                            />
+                            {selectedShip?.ownerType === 'person' ? (
+                              <CustomAutocomplete
+                                required
+                                options={clients}
+                                value={selectedShip?.client || ''}
+                                onChange={(event, val) => {
+                                  if (val) {
+                                    setSelectedShip(prevState => ({
+                                      ...prevState,
+                                      client: val
+                                    }))
+                                    setownerId(val.id)
+                                  }
+                                }}
+                                id='autocomplete-size-medium-multi'
+                                getOptionLabel={option => option.Fname + ' ' + option.Lname || ''}
+                                renderInput={params => (
+                                  <CustomTextField
+                                    required
+                                    {...params}
+                                    size='small'
+                                    label='Client'
+                                    placeholder='Client'
+                                    {...register('client', { required: true })}
+                                  />
+                                )}
+                              />
+                            ) : (
+                              <CustomAutocomplete
+                                required
+                                options={campanies}
+                                value={selectedShip?.campany || ''}
+                                onChange={(event, val) => {
+                                  if (val) {
+                                    setSelectedShip(prevState => ({
+                                      ...prevState,
+                                      campany: val
+                                    }))
+                                    setownerId(val.id)
+                                  }
+                                }}
+                                id='autocomplete-size-medium-multi'
+                                getOptionLabel={option => option.Ename || ''}
+                                renderInput={params => (
+                                  <CustomTextField
+                                    required
+                                    {...params}
+                                    size='small'
+                                    label='Client'
+                                    placeholder='Client'
+                                    {...register('client', { required: true })}
+                                  />
+                                )}
+                              />
+                            )}
                           </Grid>
 
                           <Grid item xs={12}>
@@ -473,12 +503,15 @@ export const getStaticProps = async () => {
   try {
     const res = await axios.get('http://localhost:4500/ship')
     const clientRes = await axios.get('http://localhost:4500/client')
-    const client = clientRes.data
+    const campaniesRes = await axios.get('http://localhost:4500/campanies')
+    const campanies = campaniesRes.data
+    const clients = clientRes.data
     const apiData = res.data
     return {
       props: {
         apiData,
-        client
+        clients,
+        campanies
       }
     }
   } catch (error) {

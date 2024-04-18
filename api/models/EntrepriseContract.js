@@ -1,5 +1,6 @@
 const sequelize = require("../config/db").sequelize;
 const companies = require("./companies");
+const ship = require("./ship");
 
 const { DataTypes } = require("sequelize");
 
@@ -35,5 +36,8 @@ const EntrepriseContract = sequelize.define("EntrepriseContract", {
 
 companies.hasMany(EntrepriseContract);
 EntrepriseContract.belongsTo(companies);
+
+ship.hasOne(EntrepriseContract);
+EntrepriseContract.belongsTo(ship);
 
 module.exports = EntrepriseContract;

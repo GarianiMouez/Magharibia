@@ -156,7 +156,7 @@ const TableHeader = props => {
           <CustomTextField
             value={props.value} // Utilisez props.value au lieu de value
             sx={{ mr: 4, mb: 2 }}
-            placeholder='Search Invoice'
+            placeholder='Recherche ...'
             onChange={e => props.handleFilter(e.target.value)} // Utilisez props.handleFilter au lieu de handleFilter
           />
 

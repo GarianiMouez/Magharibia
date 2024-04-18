@@ -2,6 +2,14 @@
 import { useState, useEffect, forwardRef, Fragment } from 'react'
 import TableHeader from './TableHeader/index'
 import axios from 'axios'
+const localizedTextsMap = {
+  columnMenuUnsort: 'não classificado',
+  columnMenuSortAsc: 'Classificar por ordem crescente',
+  columnMenuSortDesc: 'Classificar por ordem decrescente',
+  columnMenuFilter: 'Filtro',
+  columnMenuHideColumn: 'Ocultar',
+  columnMenuShowColumns: 'Mostrar colunas'
+}
 
 // ** Next Import
 import Link from 'next/link'
@@ -51,8 +59,10 @@ const InvoiceList = ({ apiData, clients }) => {
   const [filteredData, setFilteredData] = useState([])
 
   useEffect(() => {
-    const filtered = apiData.filter(data => data.ClientId === user.id)
+    const filtered = apiData.filter(data => data.ownerId === user.id)
+    console.log('dddd', filtered)
     setFilteredData(filtered)
+    console.log(user)
   }, [apiData, user.id])
 
   // État pour stocker les données filtrées
@@ -72,10 +82,8 @@ const InvoiceList = ({ apiData, clients }) => {
   // const filteredRows = filteredData.filter(row => row.netAmount.toLowerCase().includes(value.toLowerCase()))
   const filteredRows = filteredData.filter(
     row =>
-      row.SDate.toLowerCase().includes(value.toLowerCase()) ||
-      row.netAmount.toString().toLowerCase().includes(value.toString().toLowerCase()) ||
-      row.shipName.toString().toLowerCase().includes(value.toString().toLowerCase()) ||
-      row.clientName.toString().toLowerCase().includes(value.toString().toLowerCase())
+      row.name.toLowerCase().includes(value.toLowerCase()) ||
+      row.description.toString().toLowerCase().includes(value.toString().toLowerCase())
   )
 
   const columns = [
@@ -143,6 +151,7 @@ const InvoiceList = ({ apiData, clients }) => {
                   paginationModel={paginationModel}
                   onPaginationModelChange={setPaginationModel}
                   onRowSelectionModelChange={rows => setSelectedRows(rows)}
+                  localeText={localizedTextsMap}
                 />
               </Card>
             </Grid>

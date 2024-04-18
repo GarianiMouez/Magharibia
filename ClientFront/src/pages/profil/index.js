@@ -74,7 +74,7 @@ const TabAccount = () => {
     // Créer un nouvel objet FormData
     let dataToSubmit = new FormData()
     for (const key in formData) {
-      if (key !== 'role' && key !== 'image') {
+      if (key !== 'role' && key !== 'image' && key !== 'password') {
         dataToSubmit.append(key, formData[key])
       }
     }

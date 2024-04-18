@@ -149,11 +149,15 @@ const PContractStepper = () => {
 
   const [chosenClient, setChosenClient] = useState(null)
   const [chosenCampany, setChosenCampany] = useState(null)
+  const [ship, setShip] = useState(null)
 
   ///
   const handleChoseClient = client => {
     setChosenClient(client)
     if (client) {
+      const shipsPerClient = gloabalDataShip.filter(boat => boat.ownerId === client.id && boat.ownerType === 'person')
+      setDataShip(shipsPerClient)
+
       setFirstName(client?.Fname)
       setLastName(client?.Lname)
       setCin(client?.cin)
@@ -179,6 +183,10 @@ const PContractStepper = () => {
   const handleChoseCampany = campany => {
     setChosenCampany(campany)
     if (campany) {
+      const shipsPerClient = gloabalDataShip.filter(
+        boat => boat.ownerId === campany.id && boat.ownerType === 'enterprise'
+      )
+      setDataShip(shipsPerClient)
       setEname(campany?.Ename)
       setRne(campany?.rne)
       setEmail(campany?.email)
@@ -198,6 +206,8 @@ const PContractStepper = () => {
       setAdress('')
       setCampanyId(null)
       setDuration(null)
+      setShip('')
+      setDataShip(gloabalDataShip)
     }
   }
 
@@ -213,6 +223,8 @@ const PContractStepper = () => {
   /////// data
   const [dataClient, setDataClient] = useState([])
   const [dataCampany, setDataCampany] = useState([])
+  const [dataShip, setDataShip] = useState([])
+  const [gloabalDataShip, setGloabalDataShip] = useState([])
 
   const getClient = async () => {
     try {
@@ -234,14 +246,29 @@ const PContractStepper = () => {
       throw error
     }
   }
+  const getship = async () => {
+    try {
+      const res = await axios.get('http://localhost:4500/ship')
+      const apiData = res.data
+      return apiData
+    } catch (error) {
+      console.error("Une erreur s'est produite lors de la récupération des données du client :", error)
+      throw error
+    }
+  }
+
+  var SHIPSDATA = []
 
   useEffect(() => {
     const fetchData = async () => {
       const fetchedDataClient = await getClient()
       const fetchedDataCampanies = await getCamny()
+      const fetchedDataShip = await getship()
 
       setDataClient(fetchedDataClient)
       setDataCampany(fetchedDataCampanies)
+      setDataShip(fetchedDataShip)
+      setGloabalDataShip(fetchedDataShip)
     }
     fetchData()
   }, [])
@@ -282,6 +309,9 @@ const PContractStepper = () => {
         return true
       case 1:
         if (offerType === 'Personnel') {
+          if (ship === null) {
+            toast.error('Il faut choisr un bateau')
+          }
           return (
             firstName !== '' &&
             lastName !== '' &&
@@ -290,10 +320,20 @@ const PContractStepper = () => {
             tlf !== '' &&
             adress !== '' &&
             city !== '' &&
-            cp !== ''
+            cp !== '' &&
+            ship !== null
           )
         } else if (offerType === 'Morale') {
-          return rne !== '' && ename !== '' && email !== '' && tlf !== '' && adress !== '' && city !== '' && cp !== ''
+          return (
+            rne !== '' &&
+            ename !== '' &&
+            email !== '' &&
+            tlf !== '' &&
+            adress !== '' &&
+            city !== '' &&
+            cp !== '' &&
+            ship !== null
+          )
         }
       case 2:
         return true
@@ -312,7 +352,8 @@ const PContractStepper = () => {
           Coqu: parseFloat(coqu),
           motor: parseFloat(motor),
           totalAmount: parseFloat(motor) + parseFloat(coqu) + 10,
-          netAmount: parseFloat(motor) + parseFloat(coqu)
+          netAmount: parseFloat(motor) + parseFloat(coqu),
+          ShipId: ship.id
         }
         if (offerType === 'Personnel') {
           data.ClientId = chosenClient.id
@@ -362,6 +403,7 @@ const PContractStepper = () => {
     setChosenClient(null)
     setCoqu(0)
     setMotor(0)
+    setDataShip([])
   }
   const handleResetBeforeRadioButtonClick = type => {
     setEmail('')
@@ -376,6 +418,7 @@ const PContractStepper = () => {
     setCp('')
     setChosenCampany(null)
     setChosenClient(null)
+    setShip(null)
     setOfferType(type)
   }
 
@@ -563,7 +606,24 @@ const PContractStepper = () => {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}></Grid>
+                <Grid item xs={12} sm={6}>
+                  <CustomAutocomplete
+                    key={chosenClient}
+                    fullWidth
+                    value={ship}
+                    options={chosenClient ? dataShip : []}
+                    onChange={(event, val) => {
+                      setShip(val)
+                    }}
+                    id='autocomplete-size-medium-multi'
+                    getOptionLabel={option =>
+                      option.name ? 'Bateau: ' + option?.name : 'Sélectionnez un autre bateau'
+                    }
+                    renderInput={params => (
+                      <ReadTextField fullWidth {...params} size='small' label='Bateau' placeholder='Bateau' />
+                    )}
+                  />
+                </Grid>
                 <Grid item xs={12} sm={6}>
                   <CustomTextField
                     fullWidth
@@ -670,7 +730,25 @@ const PContractStepper = () => {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}></Grid>
+                <Grid item xs={12} sm={6}>
+                  <CustomAutocomplete
+                    key={chosenCampany}
+                    fullWidth
+                    value={ship}
+                    options={chosenCampany ? dataShip : []}
+                    onChange={(event, val) => {
+                      setShip(val)
+                    }}
+                    id='autocomplete-size-medium-multi'
+                    getOptionLabel={option =>
+                      option.name ? 'Bateau: ' + option?.name : 'Sélectionnez un autre bateau'
+                    }
+                    renderInput={params => (
+                      <ReadTextField fullWidth {...params} size='small' label='Bateau' placeholder='Bateau' />
+                    )}
+                  />
+                </Grid>
+                {/* <Grid item xs={12} sm={6}></Grid> */}
                 <Grid item xs={12} sm={6}>
                   <CustomTextField
                     fullWidth
@@ -730,7 +808,7 @@ const PContractStepper = () => {
                   />
                 </Grid>
                 <Grid item xs={12} sm={6}>
-                  <CustomTextField
+                  <ReadTextField
                     fullWidth
                     label='Code postle'
                     value={cp}
@@ -1084,6 +1162,26 @@ const PContractStepper = () => {
       <CardContent>{renderContent()}</CardContent>
     </Card>
   )
+}
+
+export const getStaticProps = async () => {
+  try {
+    const res = await axios.get('http://localhost:4500/ship')
+    const apiData = res.data
+    console.log(apiData)
+    return {
+      props: {
+        apiData
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching API data:', error)
+    return {
+      props: {
+        apiData: []
+      }
+    }
+  }
 }
 
 export default PContractStepper

@@ -237,13 +237,14 @@ export const getStaticProps = async () => {
     const econtractsRes = await axios.get('http://localhost:4500/econtract')
     const econtracts = econtractsRes.data
 
+    const campanieRes = await axios.get('http://localhost:4500/campanies')
     const clientsRes = await axios.get('http://localhost:4500/client')
     const clients = clientsRes.data
     const shipsRes = await axios.get('http://localhost:4500/ship')
     const ships = shipsRes.data
-    const campanieRes = await axios.get('http://localhost:4500/campanies')
 
     const campanies = campanieRes.data
+    console.log(campanies)
     var netAmounts = 0
     var totalAmounts = 0
     for (let i = 0; i < econtracts.length; i++) {

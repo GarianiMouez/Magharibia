@@ -2,18 +2,14 @@
 import { useState, useEffect, forwardRef, Fragment } from 'react'
 import { useForm } from 'react-hook-form'
 
-import {
-  deleteFunction,
-  fetchData,
-  AddFunction,
-  updateFunction,
-  getByid,
-  FetchContract
-} from 'src/APIs/contractPersonal'
+import { deleteFunction, fetchData, updateFunction, getByid, FetchContract } from 'src/APIs/contratEntreprise'
+import { formatDate, getShipsPerClint } from 'src/APIs/utilFunction'
 import TableHeader from './TableHeader/index'
 import axios from 'axios'
 
-import cities from 'src/views/forms/form-wizard/data/index'
+import DatePicker from 'react-datepicker'
+
+import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 
 // ** Next Import
 import Link from 'next/link'
@@ -62,7 +58,6 @@ import Icon from 'src/@core/components/icon'
 
 // ** Third Party Imports
 import format from 'date-fns/format'
-import DatePicker from 'react-datepicker'
 
 // ** Store & Actions Imports
 import { useSelector } from 'react-redux'
@@ -77,8 +72,8 @@ import OptionsMenu from 'src/@core/components/option-menu'
 import CustomTextField from 'src/@core/components/mui/text-field'
 
 // ** Styled Components
-import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import DeleteDialog from './dialogs/deleteDialog'
+import { secondsInDay } from 'date-fns'
 
 // ** Styled component for the link in the dataTable
 const LinkStyled = styled(Link)(({ theme }) => ({
@@ -87,8 +82,8 @@ const LinkStyled = styled(Link)(({ theme }) => ({
   color: `${theme.palette.primary.main} !important`
 }))
 
-// ** renders client column
-const renderClient = row => {
+// ** renders campany column
+const rendercampany = row => {
   if (row.avatar.length) {
     return <CustomAvatar src={row.avatar} sx={{ mr: 2.5, width: 38, height: 38 }} />
   } else {
@@ -145,9 +140,9 @@ const defaultColumns = [
   },
   {
     flex: 0.25,
-    field: 'clientName',
+    field: 'campanyName',
     minWidth: 20,
-    headerName: 'client'
+    headerName: 'Entreprise'
   },
   {
     flex: 0.25,
@@ -165,9 +160,10 @@ const defaultColumns = [
 ]
 /* eslint-disable */
 const CustomInput = forwardRef((props, ref) => {
-  const startDate = props.start !== null ? format(props.start, 'MM/dd/yyyy') : ''
-  const endDate = props.end !== null ? ` - ${format(props.end, 'MM/dd/yyyy')}` : null
-  const value = `${startDate}${endDate !== null ? endDate : ''}`
+  const startDate = props.start !== null ? props.start : ''
+  // const startDate = props.start !== null ? format(props.start, 'MM/dd/yyyy') : ''
+  // const endDate = props.end !== null ? ` - ${format(props.end, 'MM/dd/yyyy')}` : null
+  const value = `${startDate}`
   props.start === null && props.dates.length && props.setDates ? props.setDates([]) : null
   const updatedProps = { ...props }
   delete updatedProps.setDates
@@ -175,8 +171,11 @@ const CustomInput = forwardRef((props, ref) => {
 })
 
 /* eslint-enable */
-const InvoiceList = ({ apiData }) => {
+const InvoiceList = ({ apiData, campanies }) => {
   ///****DATA*****////
+
+  const [minDate, setMinDate] = useState(new Date())
+  const [maxDate, setMaxDate] = useState(new Date())
 
   const [filteredData, setFilteredData] = useState(apiData)
 
@@ -185,14 +184,18 @@ const InvoiceList = ({ apiData }) => {
   const [showUpdate, setShowUpdate] = useState(false)
   const [selectedId, setSelectedID] = useState(-1)
   const [selectedContract, setSelectedContract] = useState(null)
+  const [SelectedcampanyShips, setSelectedcampanyShips] = useState([])
 
   // Gestion de la suppression
   const handleClickDelete = row => {
     setShowDelete(true)
     setSelectedID(row.id)
   }
-  const handleClickUpdate = row => {
-    setSelectedContract(row)
+  const handleClickUpdate = async row => {
+    const contract = await getByid(row.id)
+    setSelectedContract(contract)
+    const campanyShips = await getShipsPerClint(contract.campanyId)
+    setSelectedcampanyShips(campanyShips)
     setShowUpdate(true)
   }
 
@@ -209,15 +212,27 @@ const InvoiceList = ({ apiData }) => {
   const updateCampany = async (id, data) => {
     const update = await updateFunction(id, data)
     if (update) {
-      const newData = await fetchData()
+      const newData = await FetchContract()
       setFilteredData(newData)
       setShowDelete(false)
     }
   }
   const onSubmit = data => {
+    data = {
+      ...data,
+      id: selectedContract.id,
+      motor: parseFloat(data.motor),
+      Coqu: parseFloat(data.Coqu),
+      totalAmount: parseFloat(data.Coqu) + parseFloat(data.motor) + 10,
+      netAmount: parseFloat(data.Coqu) + parseFloat(data.motor),
+      SDate: formatDate(selectedContract.SDate),
+      EDate: formatDate(selectedContract.EDate),
+      campanyId: selectedContract.campanyId,
+      ShipId: selectedContract.ShipId
+    }
+
     setShowUpdate(false)
-    setCity(null)
-    setCp(null)
+
     updateCampany(selectedContract?.id, data)
 
     reset()
@@ -253,7 +268,7 @@ const InvoiceList = ({ apiData }) => {
       row.SDate.toLowerCase().includes(value.toLowerCase()) ||
       row.netAmount.toString().toLowerCase().includes(value.toString().toLowerCase()) ||
       row.shipName.toString().toLowerCase().includes(value.toString().toLowerCase()) ||
-      row.clientName.toString().toLowerCase().includes(value.toString().toLowerCase())
+      row.campanyName.toString().toLowerCase().includes(value.toString().toLowerCase())
   )
 
   const handleStatusValue = e => {
@@ -316,7 +331,7 @@ const InvoiceList = ({ apiData }) => {
     <>
       <Grid container spacing={6}>
         <Grid item xs={12} sx={{ pt: theme => `${theme.spacing(8)} !important` }}>
-          <Typography variant='h6'>Gestion des Contrats Morals</Typography>
+          <Typography variant='h6'>Gestion des Contrats Personnels</Typography>
         </Grid>
         <Grid item xs={12}>
           <DatePickerWrapper>
@@ -336,15 +351,15 @@ const InvoiceList = ({ apiData }) => {
                     onPaginationModelChange={setPaginationModel}
                     onRowSelectionModelChange={rows => setSelectedRows(rows)}
                   />
-                  {/* deleteDialog */}
 
-                  {/* updateDialog */}
+                  {/* deleteDialog */}
                   <DeleteDialog
                     open={showDelete}
                     onClose={() => setShowDelete(false)}
                     onConfirm={DeletePersonnalContract}
                     selectedId={selectedId}
                   />
+                  {/* updateDialog */}
                   <Dialog
                     fullWidth
                     open={showUpdate}
@@ -383,145 +398,119 @@ const InvoiceList = ({ apiData }) => {
                       </CustomCloseButton>
                       <Box sx={{ mb: 4, textAlign: 'center' }}>
                         <Typography variant='h5' sx={{ mb: 3 }}>
-                          Modifier les informations de l'Entreprise
+                          Modifier les informations du contrat
                         </Typography>
                       </Box>
                       <form onSubmit={handleSubmit(onSubmit)}>
                         <Grid container spacing={2}>
-                          <Grid item xs={12}>
-                            <CustomTextField
-                              fullWidth
-                              value={selectedContract?.Ename || ''}
-                              label='Nom de l Entreprise'
-                              {...register('Ename', { required: true })}
-                              placeholder='Nom'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedContract({ ...selectedContract, Ename: e.target.value })}
-                            />
-                            {errors.Ename && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
+                          <Grid item xs={23}>
+                            <DatePickerWrapper>
+                              <DatePicker
+                                id='min-date'
+                                value={selectedContract ? formatDate(selectedContract.SDate) : new Date()}
+                                onChange={date => setSelectedContract({ ...selectedContract, SDate: date })}
+                                customInput={<CustomInput label='Effet Du' start={selectedContract?.SDate} />}
+                              />
+                              <Grid item xs={12} style={{ marginBottom: '10px' }}></Grid>
+
+                              <DatePicker
+                                id='min-date'
+                                value={selectedContract ? selectedContract.Sdate : new Date()}
+                                onChange={date => setSelectedContract({ ...selectedContract, EDate: date })}
+                                customInput={<CustomInput label='Effet Au' start={selectedContract?.EDate} />}
+                              />
+                            </DatePickerWrapper>
                           </Grid>
 
                           <Grid item xs={12}>
                             <CustomTextField
                               fullWidth
-                              value={selectedContract?.rne || ''}
-                              label='RNE'
-                              {...register('rne', { required: true })}
-                              placeholder='RNE'
+                              value={selectedContract?.Coqu || ''}
+                              label='Coqu'
+                              {...register('Coqu', {
+                                required: 'Ce champ est requis.',
+                                pattern: { value: /^\d+$/, message: 'Ce champ doit être numérique.' }
+                              })}
+                              placeholder='Coqu'
                               sx={{ position: 'relative' }}
-                              onChange={e => setSelectedContract({ ...selectedContract, rne: e.target.value })}
+                              onChange={e => setSelectedContract({ ...selectedContract, Coqu: e.target.value })}
                             />
-                            {errors.cin && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                            {watch('cin') && (
-                              <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>
-                                {watch('cin').length}/50
-                              </span>
-                            )}
+                            {errors.Coqu && <span style={{ color: 'red' }}>{errors.Coqu.message}</span>}
                           </Grid>
+
                           <Grid item xs={12}>
                             <CustomTextField
                               fullWidth
-                              value={selectedContract?.email || ''}
-                              label='E-mail'
-                              {...register('email', { required: true, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ })}
-                              placeholder='E-mail'
+                              value={selectedContract?.motor || ''}
+                              label='Moteur'
+                              {...register('motor', {
+                                required: 'Ce champ est requis.',
+                                pattern: { value: /^\d+$/, message: 'Ce champ doit être numérique.' }
+                              })}
+                              placeholder='motor'
                               sx={{ position: 'relative' }}
-                              onChange={e => setSelectedContract({ ...selectedContract, email: e.target.value })}
+                              onChange={e => setSelectedContract({ ...selectedContract, motor: e.target.value })}
                             />
-                            {errors.email && (
-                              <span style={{ color: 'red' }}>
-                                Ce champ est requis et doit être une adresse e-mail valide.
-                              </span>
-                            )}
-                            {watch('email') && (
-                              <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>
-                                {watch('email').length}/50
-                              </span>
-                            )}
-                          </Grid>
-                          <Grid item xs={12}>
-                            <CustomTextField
-                              fullWidth
-                              value={selectedContract?.tlf || ''}
-                              label='Numéro de Téléphone'
-                              {...register('tlf', { required: true, pattern: /^[0-9]*$/ })}
-                              placeholder='Numéro de Téléphone'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedContract({ ...selectedContract, tlf: e.target.value })}
-                            />
-                            {(errors.tlf || errors.email) && (
-                              <span style={{ color: 'red' }}>
-                                Ce champ est requis et ne doit pas contenir d'alphabet.
-                              </span>
-                            )}
+                            {errors.motor && <span style={{ color: 'red' }}>{errors.motor.message}</span>}
                           </Grid>
 
                           <Grid item xs={12}>
                             <CustomAutocomplete
-                              options={cities}
-                              value={city}
-                              isOptionEqualToValue={(option, value) => {
-                                return (
-                                  option.City.toLowerCase() === value.City.toLowerCase() &&
-                                  option.SubCity.toLowerCase() === value.SubCity.toLowerCase()
-                                )
-                              }}
-                              onChange={(event, val) => {
-                                setCity(val)
-                                setCp(val?.cp)
+                              options={campanies}
+                              value={selectedContract?.campany}
+                              onChange={async (event, val) => {
+                                if (val) {
+                                  setSelectedcampanyShips(await getShipsPerClint(val.id))
+                                  setSelectedContract({ ...selectedContract, campanyId: val.id, campany: val })
+                                } else {
+                                  setSelectedcampanyShips([])
+                                  setSelectedContract({ ...selectedContract, ShipId: null, ship: null, shipName: '' })
+                                  setSelectedContract({ ...selectedContract, campanyId: null, campany: null })
+                                }
                               }}
                               id='autocomplete-size-medium-multi'
-                              getOptionLabel={option => option.City + ' ' + option.SubCity || ''}
+                              getOptionLabel={option => option.Ename}
                               renderInput={params => (
                                 <CustomTextField
                                   {...params}
                                   size='small'
-                                  label='Ville'
-                                  placeholder='Ville'
-                                  value={selectedContract?.City}
+                                  label='campany'
+                                  placeholder='campany'
+                                  required
                                 />
                               )}
                             />
                           </Grid>
 
                           <Grid item xs={12}>
-                            <CustomTextField
-                              value={selectedContract?.cp || '' || cp}
-                              fullWidth
-                              label='Code postale'
-                              {...register('cp', { required: true })}
-                              placeholder='Code postale'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedContract({ ...selectedContract, cp: e.target.value })}
+                            <CustomAutocomplete
+                              options={SelectedcampanyShips}
+                              value={selectedContract?.ship}
+                              onChange={(event, val) => {
+                                if (val) {
+                                  setSelectedContract({ ...selectedContract, ShipId: val.id, ship: val })
+                                } else {
+                                  setSelectedContract({ ...selectedContract, ShipId: null, ship: null, shipName: '' })
+                                }
+                              }}
+                              id='autocomplete-size-medium-multi'
+                              getOptionLabel={option => option.name || 'pas options'}
+                              renderInput={params => (
+                                <CustomTextField
+                                  {...params}
+                                  size='small'
+                                  label='Bateaux'
+                                  placeholder='Bateaux'
+                                  required
+                                />
+                              )}
                             />
-                            {errors.cp && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                            {watch('cp') && (
-                              <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>
-                                {watch('cp').length}/50
-                              </span>
-                            )}
                           </Grid>
-                          <Grid item xs={12}>
-                            <CustomTextField
-                              fullWidth
-                              value={selectedContract?.adress || ''}
-                              label='Addresse'
-                              {...register('adress', { required: true })}
-                              placeholder='Addresse'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedContract({ ...selectedContract, adress: e.target.value })}
-                            />
-                            {errors.adress && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                            {watch('adress') && (
-                              <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>
-                                {watch('adress').length}/50
-                              </span>
-                            )}
-                          </Grid>
+
                           <Grid item xs={12}>
                             <Button variant='contained' type='submit'>
                               Enregistrer
-                            </Button>
+                            </Button>{' '}
                           </Grid>
                         </Grid>
                       </form>
@@ -550,27 +539,30 @@ const InvoiceList = ({ apiData }) => {
 
 export const getStaticProps = async () => {
   try {
-    const contractsRes = await axios.get('http://localhost:4500/pcontract')
-    const clientsRes = await axios.get('http://localhost:4500/client')
+    const contractsRes = await axios.get('http://localhost:4500/econtract')
+    const campanysRes = await axios.get('http://localhost:4500/campanies')
     const shipsRes = await axios.get('http://localhost:4500/ship')
 
     const contracts = contractsRes.data
-    const clients = clientsRes.data
+    const campanies = campanysRes.data
     const ships = shipsRes.data
+    console.log(campanies)
 
     const result = contracts.map(contract => {
       const ship = ships.find(ship => ship.id === contract.ShipId)
-      const client = clients.find(client => client.id === contract.ClientId)
+      const campany = campanies.find(campany => campany.id === contract.CompanyId)
       return {
         ...contract,
-        shipName: ship.name,
-        clientName: client.Fname + ' ' + client.Lname
+        shipName: ship?.name,
+        campanyName: campany.Ename ? campany.Ename : 'test'
       }
     })
 
+    console.log(result)
     return {
       props: {
-        apiData: result
+        apiData: result,
+        campanies
       }
     }
   } catch (error) {

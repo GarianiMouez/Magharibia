@@ -21,6 +21,16 @@ const fetchData = async () => {
     return []
   }
 }
+const getCampanies = async () => {
+  try {
+    const res = await axios.get('http://localhost:4500/campanies')
+    console.log(res.data)
+    return res.data
+  } catch (error) {
+    console.error('Error fetching API data:', error)
+    return []
+  }
+}
 
 const AddFunction = async body => {
   try {
@@ -57,5 +67,6 @@ module.exports = {
   fetchData,
   AddFunction,
   updateFunction,
-  getByid
+  getByid,
+  getCampanies
 }

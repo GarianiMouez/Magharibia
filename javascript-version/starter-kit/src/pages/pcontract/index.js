@@ -407,7 +407,7 @@ const InvoiceList = ({ apiData, clients }) => {
                             <DatePickerWrapper>
                               <DatePicker
                                 id='min-date'
-                                value={selectedContract ? formatDate(selectedContract.Sdate) : new Date()}
+                                value={selectedContract ? selectedContract.SDate : new Date()}
                                 onChange={date => setSelectedContract({ ...selectedContract, SDate: date })}
                                 customInput={<CustomInput label='Effet Du' start={selectedContract?.SDate} />}
                               />
@@ -415,7 +415,7 @@ const InvoiceList = ({ apiData, clients }) => {
 
                               <DatePicker
                                 id='min-date'
-                                value={selectedContract ? selectedContract.Sdate : new Date()}
+                                value={selectedContract ? selectedContract.EDate : new Date()}
                                 onChange={date => setSelectedContract({ ...selectedContract, EDate: date })}
                                 customInput={<CustomInput label='Effet Au' start={selectedContract?.EDate} />}
                               />
