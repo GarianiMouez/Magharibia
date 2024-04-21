@@ -7,8 +7,6 @@ import TableHeader from './TableHeader/index'
 import axios from 'axios'
 import Marks from './Marks'
 
-import cities from 'src/views/forms/form-wizard/data/index'
-
 // ** Next Import
 import Link from 'next/link'
 
@@ -195,10 +193,15 @@ const ShipList = ({ apiData, clients, campanies }) => {
   }
   const onSubmit = data => {
     setShowUpdate(false)
+    console.log(data)
     let submittedData = { ...data, ownerId: ownerId }
     delete submittedData.client
+    console.log('ffff', submittedData)
+
+    console.log('55555')
 
     updateShip(selectedShip?.id, submittedData)
+    console.log('/////')
     setSelectedShip(null)
 
     reset()
@@ -421,7 +424,8 @@ const ShipList = ({ apiData, clients, campanies }) => {
                                   if (val) {
                                     setSelectedShip(prevState => ({
                                       ...prevState,
-                                      client: val
+                                      client: val,
+                                      ownerId: val.id
                                     }))
                                     setownerId(val.id)
                                   }

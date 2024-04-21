@@ -3,7 +3,16 @@ import { fetchShip } from './shipsAPIs'
 export const getShipsPerClint = async clientId => {
   try {
     const ships = await fetchShip()
-    return ships.filter(ship => ship.ownerId === clientId)
+    return ships.filter(ship => ship.ownerId === clientId && ship.ownerType === 'person')
+  } catch (error) {
+    console.error('Error fetching ships:', error)
+    return []
+  }
+}
+export const getShipsPerCompany = async clientId => {
+  try {
+    const ships = await fetchShip()
+    return ships.filter(ship => ship.ownerId === clientId && ship.ownerType === 'enterprise')
   } catch (error) {
     console.error('Error fetching ships:', error)
     return []

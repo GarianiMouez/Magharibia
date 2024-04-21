@@ -3,7 +3,7 @@ import { useState, useEffect, forwardRef, Fragment } from 'react'
 import { useForm } from 'react-hook-form'
 
 import { deleteFunction, fetchData, updateFunction, getByid, FetchContract } from 'src/APIs/contratEntreprise'
-import { formatDate, getShipsPerClint } from 'src/APIs/utilFunction'
+import { formatDate, getShipsPerCompany } from 'src/APIs/utilFunction'
 import TableHeader from './TableHeader/index'
 import axios from 'axios'
 
@@ -193,9 +193,11 @@ const InvoiceList = ({ apiData, campanies }) => {
   }
   const handleClickUpdate = async row => {
     const contract = await getByid(row.id)
-    setSelectedContract(contract)
-    const campanyShips = await getShipsPerClint(contract.campanyId)
-    setSelectedcampanyShips(campanyShips)
+
+    setSelectedContract(row)
+    // console.log
+    // const campanyShips = await getShipsPerCompany(contract.campanyId)
+    // setSelectedcampanyShips(campanyShips)
     setShowUpdate(true)
   }
 
@@ -460,7 +462,8 @@ const InvoiceList = ({ apiData, campanies }) => {
                               value={selectedContract?.campany}
                               onChange={async (event, val) => {
                                 if (val) {
-                                  setSelectedcampanyShips(await getShipsPerClint(val.id))
+                                  setSelectedcampanyShips(await getShipsPerCompany(val.id))
+
                                   setSelectedContract({ ...selectedContract, campanyId: val.id, campany: val })
                                 } else {
                                   setSelectedcampanyShips([])
@@ -474,8 +477,8 @@ const InvoiceList = ({ apiData, campanies }) => {
                                 <CustomTextField
                                   {...params}
                                   size='small'
-                                  label='campany'
-                                  placeholder='campany'
+                                  label='Entreprise'
+                                  placeholder='Entreprise'
                                   required
                                 />
                               )}
@@ -546,7 +549,6 @@ export const getStaticProps = async () => {
     const contracts = contractsRes.data
     const campanies = campanysRes.data
     const ships = shipsRes.data
-    console.log(campanies)
 
     const result = contracts.map(contract => {
       const ship = ships.find(ship => ship.id === contract.ShipId)
@@ -554,7 +556,9 @@ export const getStaticProps = async () => {
       return {
         ...contract,
         shipName: ship?.name,
-        campanyName: campany.Ename ? campany.Ename : 'test'
+        campanyName: campany.Ename ? campany.Ename : 'test',
+        campany: campany,
+        ship: ship
       }
     })
 

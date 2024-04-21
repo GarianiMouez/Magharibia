@@ -141,6 +141,9 @@ const PContractStepper = () => {
   const [adress, setAdress] = useState()
   const [city, setCity] = useState(null)
   const [cp, setCp] = useState()
+  const handlePDF = () => {
+    console.log('hello pdf')
+  }
 
   /////// moral
   const [rne, setRne] = useState('')
@@ -1062,17 +1065,6 @@ const PContractStepper = () => {
     }
   }
 
-  // const downloadPdf = () => {
-  //   const doc = new pdfjs.Document()
-  //   doc.text('Hello, world!')
-  //   const pdfDataUri = doc.output('datauristring')
-  //   const link = document.createElement('a')
-  //   link.href = pdfDataUri
-  //   link.download = 'example.pdf'
-  //   document.body.appendChild(link)
-  //   link.click()
-  //   document.body.removeChild(link)
-  // }
   const renderContent = () => {
     if (activeStep === steps.length) {
       return (
@@ -1085,7 +1077,9 @@ const PContractStepper = () => {
               </Button>
             </Box>
             <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
-              <Button variant='contained'>Télécharger en Format PDF </Button>
+              <Button variant='contained' onClick={handlePDF}>
+                Télécharger en Format PDF{' '}
+              </Button>
             </Box>
           </Box>
         </>

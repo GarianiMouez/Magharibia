@@ -79,6 +79,7 @@ const TableHeader = props => {
   const [show, setShow] = useState(false)
   const [city, setCity] = useState(null)
   const [cp, setCp] = useState(null)
+  const [gender, setGender] = useState(null)
 
   const handleClick = () => {
     setShow(true)
@@ -88,6 +89,7 @@ const TableHeader = props => {
     setShow(false)
     setCity(null)
     setCp(null)
+    setGender('')
     reset()
   }
 
@@ -96,6 +98,7 @@ const TableHeader = props => {
     setCity(null)
     setCp(null)
     reset()
+    console.log(data)
     props.Addclient(data)
   }
 
@@ -218,6 +221,27 @@ const TableHeader = props => {
                   {watch('cin') && (
                     <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>{watch('cin').length}/50</span>
                   )}
+                </Grid>
+                <Grid item xs={12}>
+                  <CustomAutocomplete
+                    options={['Homme', 'Femme']}
+                    value={gender}
+                    onChange={(event, val) => {
+                      console.log(val)
+                      setGender(val)
+                    }}
+                    id='autocomplete-size-medium-multi'
+                    getOptionLabel={option => option}
+                    renderInput={params => (
+                      <CustomTextField
+                        {...params}
+                        size='small'
+                        label='Gener'
+                        placeholder='Gener'
+                        {...register('gender', { required: true })}
+                      />
+                    )}
+                  />
                 </Grid>
                 <Grid item xs={12}>
                   <CustomTextField

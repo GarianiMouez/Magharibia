@@ -3,6 +3,10 @@ const { DataTypes } = require("sequelize");
 //// ajouter user name entreprise
 
 const Client = sequelize.define("Client", {
+  gender: {
+    type: DataTypes.ENUM("Homme", "Femme"),
+    allowNull: false,
+  },
   Fname: {
     type: DataTypes.STRING,
     allowNull: false,

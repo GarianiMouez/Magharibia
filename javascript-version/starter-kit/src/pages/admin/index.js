@@ -67,6 +67,7 @@ import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import DeleteDialog from '../admin/dialogs/deleteDialog'
 import FileUploaderSingle from 'src/views/forms/form-elements/file-uploader/FileUploaderSingle'
 import { tr } from 'date-fns/locale'
+import email from 'src/store/apps/email'
 
 // ** Styled component for the link in the dataTable
 const LinkStyled = styled(Link)(({ theme }) => ({
@@ -440,21 +441,11 @@ const InvoiceList = ({ apiData }) => {
                           <Grid container spacing={2}>
                             <Grid item xs={12}>
                               <CustomTextField
-                                fullWidth
                                 value={selectedAdmin?.firstName}
-                                label='Nom'
-                                {...register('lastName', { required: true })}
-                                placeholder='Nom'
-                                sx={{ position: 'relative' }}
-                              />
-                              {errors.lastName && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                            </Grid>
-                            <Grid item xs={12}>
-                              <CustomTextField
-                                value={selectedAdmin?.lastName}
                                 fullWidth
                                 label='Prénom'
                                 {...register('firstName', { required: true })}
+                                onChange={e => setSelectedAdmin({ ...selectedAdmin, firstName: e.target.value })}
                                 placeholder='Prénom'
                                 sx={{ position: 'relative' }}
                               />
@@ -467,10 +458,29 @@ const InvoiceList = ({ apiData }) => {
                             </Grid>
                             <Grid item xs={12}>
                               <CustomTextField
+                                value={selectedAdmin?.lastName}
+                                fullWidth
+                                label='Nom'
+                                {...register('lastName', { required: true })}
+                                onChange={e => setSelectedAdmin({ ...selectedAdmin, lastName: e.target.value })}
+                                placeholder='Nom'
+                                sx={{ position: 'relative' }}
+                              />
+                              {errors.firstName && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
+                              {watch('firstName') && (
+                                <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>
+                                  {watch('firstName').length}/50
+                                </span>
+                              )}
+                            </Grid>
+
+                            <Grid item xs={12}>
+                              <CustomTextField
                                 value={selectedAdmin?.username}
                                 fullWidth
                                 label='Username/Identifiant'
                                 {...register('username', { required: true })}
+                                onChange={e => setSelectedAdmin({ ...selectedAdmin, username: e.target.value })}
                                 placeholder='username'
                                 sx={{ position: 'relative' }}
                               />
@@ -548,6 +558,7 @@ const InvoiceList = ({ apiData }) => {
                                 label='E-mail'
                                 {...register('email', { required: true, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ })}
                                 placeholder='E-mail'
+                                onChange={e => setSelectedAdmin({ ...selectedAdmin, email: e.target.value })}
                                 sx={{ position: 'relative' }}
                               />
                               {errors.email && (

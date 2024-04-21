@@ -112,6 +112,13 @@ const defaultColumns = [
   },
   {
     flex: 0.25,
+    field: 'gender',
+    minWidth: 150,
+    headerName: 'genre'
+  },
+
+  {
+    flex: 0.25,
     field: 'email',
     minWidth: 150,
     headerName: 'E-mail'
@@ -165,6 +172,11 @@ const InvoiceList = ({ apiData }) => {
   }
   const handleClickUpdate = row => {
     setSelectedClient(row)
+    console.log('row row ', row)
+    let city = cities.find(el => (el.City + ' ' + el.SubCity).toLowerCase() == row?.City.toLowerCase())
+    setCity(city ?? null)
+    setCp(city.cp)
+
     setShowUpdate(true)
   }
 
@@ -195,6 +207,8 @@ const InvoiceList = ({ apiData }) => {
     }
   }
   const onSubmit = data => {
+    data.City = City.City + ' ' + City.SubCity
+    data.cp = cp
     setShowUpdate(false)
     setCity(null)
     setCp(null)
@@ -456,8 +470,14 @@ const InvoiceList = ({ apiData }) => {
                                 )
                               }}
                               onChange={(event, val) => {
-                                setCity(val)
-                                setCp(val?.cp)
+                                if (val) {
+                                  setCity(val)
+                                  setCp(val?.cp)
+                                  setSelectedClient({ ...selectedClient, City: val.City + ' ' + val.SubCity })
+                                } else {
+                                  setCp('')
+                                  setCity(null)
+                                }
                               }}
                               id='autocomplete-size-medium-multi'
                               getOptionLabel={option => option.City + ' ' + option.SubCity || ''}
@@ -467,7 +487,7 @@ const InvoiceList = ({ apiData }) => {
                                   size='small'
                                   label='Ville'
                                   placeholder='Ville'
-                                  value={selectedClient?.City}
+                                  // value={selectedClient?.City}
                                 />
                               )}
                             />
@@ -475,7 +495,7 @@ const InvoiceList = ({ apiData }) => {
 
                           <Grid item xs={12}>
                             <CustomTextField
-                              value={selectedClient?.cp || '' || cp}
+                              value={cp}
                               fullWidth
                               label='Code postale'
                               {...register('cp', { required: true })}

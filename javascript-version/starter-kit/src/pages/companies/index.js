@@ -160,6 +160,9 @@ const InvoiceList = ({ apiData }) => {
   }
   const handleClickUpdate = row => {
     setSelectedCampany(row)
+    let city = cities.find(el => (el.City + ' ' + el.SubCity).toLowerCase() == row?.City.toLowerCase())
+    setCity(city ?? null)
+    setCp(city.cp)
     setShowUpdate(true)
     console.log('row', selectedCampany)
   }
@@ -191,11 +194,12 @@ const InvoiceList = ({ apiData }) => {
     }
   }
   const onSubmit = data => {
-    console.log(data)
+    data.cp = cp
+    data.City = city.City + ' ' + city.SubCity
     setShowUpdate(false)
     setCity(null)
     setCp(null)
-    console.log('test id ', selectedCampany)
+
     updateCampany(selectedCampany?.id, data)
 
     reset()
@@ -469,7 +473,7 @@ const InvoiceList = ({ apiData }) => {
 
                           <Grid item xs={12}>
                             <CustomTextField
-                              value={selectedCampany?.cp || '' || cp}
+                              value={cp}
                               fullWidth
                               label='Code postale'
                               {...register('cp', { required: true })}
@@ -505,7 +509,7 @@ const InvoiceList = ({ apiData }) => {
                           <Grid item xs={12}>
                             <Button variant='contained' type='submit'>
                               Enregistrer
-                            </Button>{' '}
+                            </Button>
                             {/* Utilisez Button avec type='submit' */}
                           </Grid>
                         </Grid>
