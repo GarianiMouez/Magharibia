@@ -422,6 +422,26 @@ const InvoiceList = ({ apiData }) => {
                             )}
                           </Grid>
                           <Grid item xs={12}>
+                            <CustomAutocomplete
+                              options={['Homme', 'Femme']}
+                              value={selectedClient?.gender}
+                              onChange={(event, val) => {
+                                setSelectedClient({ ...selectedClient, gender: val })
+                              }}
+                              id='autocomplete-size-medium-multi'
+                              getOptionLabel={option => option}
+                              renderInput={params => (
+                                <CustomTextField
+                                  {...params}
+                                  size='small'
+                                  label='Gener'
+                                  placeholder='Gener'
+                                  {...register('gender', { required: true })}
+                                />
+                              )}
+                            />
+                          </Grid>
+                          <Grid item xs={12}>
                             <CustomTextField
                               fullWidth
                               value={selectedClient?.email || ''}
