@@ -5,6 +5,11 @@ const navigation = () => {
       path: '/home',
       icon: 'tabler:home'
     },
+    {
+      title: 'Dashboard',
+      path: '/dashboard',
+      icon: 'tabler:chart-pie'
+    },
 
     {
       path: '/admin',

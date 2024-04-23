@@ -36,7 +36,7 @@ const CardStatsVertical = props => {
         >
           <Icon icon={avatarIcon} fontSize={iconSize} />
         </CustomAvatar>
-        <Typography variant='h5' sx={{ mb: 1 }}>
+        <Typography variant='h6' sx={{ mb: 1 }}>
           {title}
         </Typography>
 

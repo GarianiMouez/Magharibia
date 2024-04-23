@@ -44,7 +44,7 @@ const MenuItemWrapper = ({ children, option }) => {
 
 const OptionsMenu = props => {
   // ** Props
-  const { icon, options, menuProps, iconProps, leftAlignMenu, iconButtonProps } = props
+  const { icon, options, menuProps, iconProps, leftAlignMenu, iconButtonProps, onClick } = props
 
   // ** State
   const [anchorEl, setAnchorEl] = useState(null)
@@ -95,6 +95,9 @@ const OptionsMenu = props => {
                 onClick={e => {
                   handleClose()
                   option.menuItemProps && option.menuItemProps.onClick ? option.menuItemProps.onClick(e) : null
+                  if (onClick) {
+                    onClick(option)
+                  }
                 }}
               >
                 <MenuItemWrapper option={option}>

@@ -5,18 +5,12 @@ const navigation = () => {
       path: '/home',
       icon: 'tabler:home'
     },
-    // {
-    //   title: 'Second Page',
-    //   path: '/second-page',
-    //   icon: 'tabler:mail'
-    // },
-    // {
-    //   path: '/acl',
-    //   action: 'read',
-    //   subject: 'acl-page',
-    //   title: 'Access Control',
-    //   icon: 'tabler:shield'
-    // },
+    {
+      title: 'Dashboard',
+      path: '/dashboard',
+      icon: 'tabler:pie'
+    },
+
     {
       path: '/contract',
       action: 'read',

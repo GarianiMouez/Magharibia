@@ -66,6 +66,7 @@ import CustomTextField from 'src/@core/components/mui/text-field'
 
 // ** Styled Components
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
+import { InputAdornment } from '@mui/material'
 
 const TableHeader = props => {
   const {
@@ -77,6 +78,7 @@ const TableHeader = props => {
   } = useForm()
 
   const [show, setShow] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [city, setCity] = useState(null)
   const [cp, setCp] = useState(null)
   const [gender, setGender] = useState(null)
@@ -85,6 +87,9 @@ const TableHeader = props => {
     setShow(true)
   }
 
+  const handleClickShowPassword = () => {
+    setShowPassword(!showPassword)
+  }
   const handleClose = () => {
     setShow(false)
     setCity(null)
@@ -179,10 +184,25 @@ const TableHeader = props => {
                 <Grid item xs={12}>
                   <CustomTextField
                     fullWidth
+                    type={showPassword ? 'text' : 'password'}
                     label='Mot de Passe'
                     {...register('password', { required: true })}
                     placeholder='Mot de passe'
                     sx={{ position: 'relative' }}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position='end'>
+                          <IconButton
+                            edge='end'
+                            onClick={handleClickShowPassword}
+                            onMouseDown={e => e.preventDefault()}
+                            aria-label='toggle password visibility'
+                          >
+                            <Icon fontSize='1.25rem' icon={showPassword ? 'tabler:eye' : 'tabler:eye-off'} />
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }}
                   />
                   {errors.password && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
                 </Grid>
