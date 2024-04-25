@@ -7,6 +7,7 @@ router.get("/", function (req, res, next) {
 });
 router.use("/econtract", require("./econtract"));
 router.use("/pcontract", require("./pcontract"));
+router.use("/send-email", require("./sendEmail"));
 router.use("/auth", require("./auth"));
 router.use("/auth-client", require("./authClient"));
 router.use("/admins", require("./admin"));

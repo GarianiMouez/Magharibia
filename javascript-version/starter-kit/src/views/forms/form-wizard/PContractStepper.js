@@ -82,6 +82,7 @@ import { convertDuration } from '../../../APIs/dateConvert'
 import { set } from 'nprogress'
 import axios from 'axios'
 import { flexbox } from '@mui/system'
+import { sendEmail } from 'src/APIs/sendEmail'
 const paymentOptions = [
   { title: 'Annuelle', val: ' Annuelle' },
   { title: 'Semestrielle', val: 'Semestrielle' }
@@ -345,7 +346,7 @@ const PContractStepper = () => {
     }
   }
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (areAllFieldsFilled()) {
       setActiveStep(prevActiveStep => prevActiveStep + 1)
       if (activeStep === steps.length - 1) {
@@ -360,12 +361,26 @@ const PContractStepper = () => {
         }
         if (offerType === 'Personnel') {
           data.ClientId = chosenClient.id
-          AddPcontract(data)
+          await AddPcontract(data)
+          let body = {
+            senderEmail: 'mouezghariani2@gmail.com',
+            recipientEmail: email,
+            subject: 'Contrat Assurance',
+            text: `Cher ${firstName}\n \n \n Nous sommes ravi de vous annocner que votre contrat d'assurance est traité \n\n Merci de votre conféance \n\n Cordiallement`
+          }
+          await sendEmail(body)
         }
         if (offerType === 'Morale') {
           data.CompanyId = chosenCampany.id
 
           AddEcontract(data)
+          let body = {
+            senderEmail: 'mouezghariani2@gmail.com',
+            recipientEmail: email,
+            subject: 'Contrat Assurance',
+            text: `Cher(s) propriétaire(s) de ${ename},\n\n\n Nous sommes ravis de vous annoncer que votre contrat d'assurance a été traité.\n\n\nMerci de votre confiance.\n\n\nCordialement,`
+          }
+          await sendEmail(body)
         }
         toast.success('Formulaire soumis')
       }

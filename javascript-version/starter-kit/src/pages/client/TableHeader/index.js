@@ -1,25 +1,20 @@
-import { useState, useEffect, forwardRef, Fragment } from 'react'
-import { useForm } from 'react-hook-form'
-
+import { useState, forwardRef, useMemo } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import * as yup from 'yup'
+import { yupResolver } from '@hookform/resolvers/yup'
 import cities from 'src/views/forms/form-wizard/data/index'
-
-// ** Next Import
-import Link from 'next/link'
+const citiesOptions = cities.map(element => ({
+  value: element.cp,
+  label: element.City + ' ' + element.SubCity
+}))
 
 // ** MUI Imports
 import Fade from '@mui/material/Fade'
 
 import Box from '@mui/material/Box'
-import Grid from '@mui/material/Grid'
-import Card from '@mui/material/Card'
-import Tooltip from '@mui/material/Tooltip'
 import { styled } from '@mui/material/styles'
-import MenuItem from '@mui/material/MenuItem'
-import CardHeader from '@mui/material/CardHeader'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import CardContent from '@mui/material/CardContent'
-import { DataGrid, gridColumnsTotalWidthSelector } from '@mui/x-data-grid'
 import Button from '@mui/material/Button'
 
 import Dialog from '@mui/material/Dialog'
@@ -48,20 +43,7 @@ const CustomCloseButton = styled(IconButton)(({ theme }) => ({
 // ** Icon Imports
 import Icon from 'src/@core/components/icon'
 
-// ** Third Party Imports
-import format from 'date-fns/format'
-import DatePicker from 'react-datepicker'
-
-// ** Store & Actions Imports
-import { useSelector } from 'react-redux'
-
 // ** Utils Import
-import { getInitials } from 'src/@core/utils/get-initials'
-
-// ** Custom Components Imports
-import CustomChip from 'src/@core/components/mui/chip'
-import CustomAvatar from 'src/@core/components/mui/avatar'
-import OptionsMenu from 'src/@core/components/option-menu'
 import CustomTextField from 'src/@core/components/mui/text-field'
 
 // ** Styled Components
@@ -69,18 +51,39 @@ import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import { InputAdornment } from '@mui/material'
 
 const TableHeader = props => {
+  const schema = useMemo(
+    () =>
+      yup.object({
+        email: yup.string().email().required(),
+        password: yup.string().required(),
+        username: yup.string().required(),
+        Fname: yup.string().required(),
+        Lname: yup.string().required(),
+        gender: yup.mixed().required(),
+        cp: yup.mixed().required(),
+        adress: yup.string().required(),
+        cin: yup.number().required().positive().integer(),
+        tlf: yup.number().required().positive().integer(),
+        BirthDate: yup.date().required()
+      }),
+    []
+  )
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors },
-    watch,
     reset
-  } = useForm()
+  } = useForm({
+    defaultValues: {},
+    mode: 'onChange',
+    resolver: yupResolver(schema)
+  })
 
   const [show, setShow] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [city, setCity] = useState(null)
   const [cp, setCp] = useState(null)
+  const [birthDate, setBirthDate] = useState('')
   const [gender, setGender] = useState(null)
 
   const handleClick = () => {
@@ -94,6 +97,7 @@ const TableHeader = props => {
     setShow(false)
     setCity(null)
     setCp(null)
+    setBirthDate('')
     setGender('')
     reset()
   }
@@ -102,9 +106,14 @@ const TableHeader = props => {
     setShow(false)
     setCity(null)
     setCp(null)
+    setBirthDate('')
     reset()
     console.log(data)
     props.Addclient(data)
+  }
+
+  const onChangeDate = e => {
+    setBirthDate(e)
   }
 
   return (
@@ -123,10 +132,10 @@ const TableHeader = props => {
       >
         <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
           <CustomTextField
-            value={props.value} // Utilisez props.value au lieu de value
+            value={props.value}
             sx={{ mr: 4, mb: 2 }}
             placeholder='Recherche ...'
-            onChange={e => props.handleFilter(e.target.value)} // Utilisez props.handleFilter au lieu de handleFilter
+            onChange={e => props.handleFilter(e.target.value)}
           />
 
           <Button sx={{ mb: 2 }} onClick={handleClick} variant='contained'>
@@ -140,9 +149,9 @@ const TableHeader = props => {
         open={show}
         maxWidth='md'
         scroll='body'
-        onClose={handleClose} // Utilisez handleClose pour gérer la fermeture du dialogue
+        onClose={handleClose}
         TransitionComponent={Transition}
-        onBackdropClick={handleClose} // Utilisez handleClose pour gérer la fermeture du dialogue
+        onBackdropClick={handleClose}
         sx={{ '& .MuiDialog-paper': { overflow: 'visible' } }}
       >
         <DialogContent
@@ -151,203 +160,312 @@ const TableHeader = props => {
             py: theme => [`${theme.spacing(8)} !important`, `${theme.spacing(12.5)} !important`]
           }}
         >
-          <Box sx={{ mb: 4, textAlign: 'center' }}>
-            <CustomCloseButton
-              onClick={() => {
-                setShow(false)
-                setCity(null)
-                setCp(null)
-              }}
-            >
-              <Icon icon='tabler:x' fontSize='1.25rem' />
-            </CustomCloseButton>
-            <Typography variant='h3' sx={{ mb: 3 }}>
-              Ajouter Nouveau Client
-            </Typography>
-          </Box>
+          <DatePickerWrapper>
+            <Box sx={{ mb: 4, textAlign: 'center' }}>
+              <CustomCloseButton
+                onClick={() => {
+                  setShow(false)
+                  setCity(null)
+                  setCp(null)
+                  setBirthDate('')
+                }}
+              >
+                <Icon icon='tabler:x' fontSize='1.25rem' />
+              </CustomCloseButton>
+              <Typography variant='h3' sx={{ mb: 3 }}>
+                Ajouter Nouveau Client
+              </Typography>
+            </Box>
 
-          <Box sx={{ marginTop: '5%' }}>
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <Grid container spacing={2}>
-                {' '}
-                {/* Utilisez Grid container et spacing */}
-                <Grid item xs={12}>
-                  <CustomTextField
-                    fullWidth
-                    label='Identifiant'
-                    {...register('username', { required: true })}
-                    placeholder='Identifant'
-                    sx={{ position: 'relative' }}
+            {/* form */}
+            <Box sx={{ marginTop: '5%' }}>
+              <DatePickerWrapper>
+                <form
+                  onSubmit={handleSubmit(data => {
+                    console.log('mouezzzzzzzz', data)
+                    let x = { ...data, City: data.cp.label, cp: data.cp.value, gender: data.gender.value }
+                    console.log('xxxxxx', x)
+                    setShow(false)
+
+                    props.Addclient(x)
+                    reset()
+                  })}
+                >
+                  <Controller
+                    name={'username'}
+                    control={control}
+                    render={({ field }) => (
+                      <CustomTextField
+                        {...field}
+                        sx={{ mb: 4 }}
+                        variant='outlined'
+                        size='small'
+                        fullWidth
+                        label={'Identifaint'}
+                        error={!!errors['username']}
+                        helperText={'Ce champs requis'}
+                      />
+                    )}
                   />
-                  {errors.username && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                </Grid>
-                <Grid item xs={12}>
-                  <CustomTextField
-                    fullWidth
-                    type={showPassword ? 'text' : 'password'}
-                    label='Mot de Passe'
-                    {...register('password', { required: true })}
-                    placeholder='Mot de passe'
-                    sx={{ position: 'relative' }}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position='end'>
-                          <IconButton
-                            edge='end'
-                            onClick={handleClickShowPassword}
-                            onMouseDown={e => e.preventDefault()}
-                            aria-label='toggle password visibility'
-                          >
-                            <Icon fontSize='1.25rem' icon={showPassword ? 'tabler:eye' : 'tabler:eye-off'} />
-                          </IconButton>
-                        </InputAdornment>
+                  <Controller
+                    name={'password'}
+                    control={control}
+                    render={({ field }) => (
+                      <CustomTextField
+                        {...field}
+                        type={showPassword ? 'text' : 'password'}
+                        sx={{ mb: 4 }}
+                        variant='outlined'
+                        size='small'
+                        fullWidth
+                        label={'Mot de passe'}
+                        error={!!errors['password']}
+                        helperText={'Ce champs requis'}
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position='end'>
+                              <IconButton
+                                edge='end'
+                                onClick={handleClickShowPassword}
+                                onMouseDown={e => e.preventDefault()}
+                                aria-label='toggle password visibility'
+                              >
+                                <Icon fontSize='1.25rem' icon={showPassword ? 'tabler:eye' : 'tabler:eye-off'} />
+                              </IconButton>
+                            </InputAdornment>
+                          )
+                        }}
+                      />
+                    )}
+                  />
+                  <Controller
+                    name={'Fname'}
+                    control={control}
+                    render={({ field }) => (
+                      <CustomTextField
+                        {...field}
+                        sx={{ mb: 4 }}
+                        variant='outlined'
+                        size='small'
+                        fullWidth
+                        label={'Prénom'}
+                        error={!!errors['Fname']}
+                        // helperText={errors['Fname']?.message}
+                        helperText={'Ce champs requis'}
+                      />
+                    )}
+                  />
+                  <Controller
+                    name={'Lname'}
+                    control={control}
+                    render={({ field }) => (
+                      <CustomTextField
+                        {...field}
+                        sx={{ mb: 4 }}
+                        variant='outlined'
+                        size='small'
+                        fullWidth
+                        label={'Nom'}
+                        error={!!errors['Lname']}
+                        // helperText={errors['Lname']?.message}
+                        helperText={'Ce champs requis'}
+                      />
+                    )}
+                  />
+                  <Controller
+                    name={'cin'}
+                    control={control}
+                    render={({ field }) => (
+                      <CustomTextField
+                        {...field}
+                        sx={{ mb: 4 }}
+                        variant='outlined'
+                        size='small'
+                        fullWidth
+                        label={'CIN'}
+                        error={!!errors['cin']}
+                        // helperText={errors['cin']?.message}
+                        helperText={'Ce champs requis'}
+                      />
+                    )}
+                  />
+                  <Controller
+                    name={'email'}
+                    control={control}
+                    render={({ field }) => (
+                      <CustomTextField
+                        {...field}
+                        sx={{ mb: 4 }}
+                        variant='outlined'
+                        size='small'
+                        fullWidth
+                        label={'Email'}
+                        error={!!errors['email']}
+                        // helperText={errors['email']?.message}
+                        helperText={'Ce champs requis'}
+                      />
+                    )}
+                  />
+                  <Controller
+                    name={'gender'}
+                    control={control}
+                    render={({ field }) => (
+                      <CustomAutocomplete
+                        options={[
+                          { label: 'Homme', value: 'Homme' },
+                          { label: 'Femme', value: 'Femme' }
+                        ]}
+                        id='autocomplete-size-medium-multi'
+                        {...field}
+                        sx={{ mb: 4 }}
+                        getOptionLabel={option => option.label ?? ''}
+                        onChange={(e, v) => field.onChange(v)}
+                        isOptionEqualToValue={(option, val) => {
+                          return option.value === val.value
+                        }}
+                        renderInput={params => (
+                          <CustomTextField
+                            {...params}
+                            size='small'
+                            label='Gener'
+                            placeholder='Gener'
+                            error={!!errors['gender']}
+                            // helperText={errors['gender']?.message}
+                            helperText={'Ce champs requis'}
+                          />
+                        )}
+                      />
+                    )}
+                  />
+                  {/* <Controller
+                          name={'gender'}
+                          control={control}
+                          render={({ field }) => (
+                            <CustomTextField
+                              {...field}
+                              variant='outlined'
+                              size='small'
+                              fullWidth
+                              label={'Gener'}
+                              error={!!errors['gender']}
+                              helperText={errors['gender']?.message}
+                            />
+                          )}
+                        /> */}
+                  {/* <Controller
+                          name={'BirthDate'}
+                          control={control}
+                          render={({ field }) => (
+                            <DatePicker
+                              showYearDropdown
+                              showMonthDropdown
+                              placeholderText='DD/MM/YYYY'
+                              selected={field.value}
+                              {...field}
+                              customInput={
+                                <CustomTextField
+                                  ariant='outlined'
+                                  size='small'
+                                  fullWidth
+                                  label={'Date de Naissance'}
+                                  error={!!errors['BirthDate']}
+                                  helperText={errors['BirthDate']?.message}
+                                />
+                              }
+                            />
+                          )}
+                        /> */}
+                  <Controller
+                    name={'BirthDate'}
+                    control={control}
+                    render={({ field }) => {
+                      console.log(field)
+                      return (
+                        <CustomTextField
+                          {...field}
+                          sx={{ mb: 4 }}
+                          type='date'
+                          variant='outlined'
+                          size='small'
+                          fullWidth
+                          label={'Date de Naissance '}
+                          error={!!errors['BirthDate']}
+                          // helperText={errors['BirthDate']?.message}
+                          helperText={'Ce champs requis'}
+                        />
                       )
                     }}
                   />
-                  {errors.password && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                </Grid>
-                <Grid item xs={12}>
-                  <CustomTextField
-                    fullWidth
-                    label='Nom'
-                    {...register('Lname', { required: true })}
-                    placeholder='Nom'
-                    sx={{ position: 'relative' }}
-                  />
-                  {errors.Lname && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                </Grid>
-                <Grid item xs={12}>
-                  <CustomTextField
-                    fullWidth
-                    label='Prénom'
-                    {...register('Fname', { required: true })}
-                    placeholder='Prénom'
-                    sx={{ position: 'relative' }}
-                  />
-                  {errors.Fname && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                  {watch('Fname') && (
-                    <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>{watch('Fname').length}/50</span>
-                  )}
-                </Grid>
-                <Grid item xs={12}>
-                  <CustomTextField
-                    fullWidth
-                    label='CIN'
-                    {...register('cin', { required: true })}
-                    placeholder='CIN'
-                    sx={{ position: 'relative' }}
-                  />
-                  {errors.cin && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                  {watch('cin') && (
-                    <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>{watch('cin').length}/50</span>
-                  )}
-                </Grid>
-                <Grid item xs={12}>
-                  <CustomAutocomplete
-                    options={['Homme', 'Femme']}
-                    value={gender}
-                    onChange={(event, val) => {
-                      console.log(val)
-                      setGender(val)
-                    }}
-                    id='autocomplete-size-medium-multi'
-                    getOptionLabel={option => option}
-                    renderInput={params => (
+                  <Controller
+                    name={'tlf'}
+                    control={control}
+                    render={({ field }) => (
                       <CustomTextField
-                        {...params}
+                        {...field}
+                        sx={{ mb: 4 }}
+                        variant='outlined'
                         size='small'
-                        label='Gener'
-                        placeholder='Gener'
-                        {...register('gender', { required: true })}
+                        fullWidth
+                        label={'Numéro de téléphone'}
+                        error={!!errors['tlf']}
+                        // helperText={errors['tlf']?.message}
+                        helperText={'Ce champs requis'}
                       />
                     )}
                   />
-                </Grid>
-                <Grid item xs={12}>
-                  <CustomTextField
-                    fullWidth
-                    label='E-mail'
-                    {...register('email', { required: true, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ })}
-                    placeholder='E-mail'
-                    sx={{ position: 'relative' }}
-                  />
-                  {errors.email && (
-                    <span style={{ color: 'red' }}>Ce champ est requis et doit être une adresse e-mail valide.</span>
-                  )}
-                  {watch('email') && (
-                    <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>{watch('email').length}/50</span>
-                  )}
-                </Grid>
-                <Grid item xs={12}>
-                  <CustomTextField
-                    fullWidth
-                    label='Numéro de Téléphone'
-                    {...register('tlf', { required: true, pattern: /^[0-9]*$/ })}
-                    placeholder='Numéro de Téléphone'
-                    sx={{ position: 'relative' }}
-                  />
-                  {(errors.tlf || errors.email) && (
-                    <span style={{ color: 'red' }}>Ce champ est requis et ne doit pas contenir d'alphabet.</span>
-                  )}
-                </Grid>
-                <Grid item xs={12}>
-                  <CustomAutocomplete
-                    options={cities}
-                    value={city}
-                    onChange={(event, val) => {
-                      setCity(val)
-                      setCp(val.cp)
-                    }}
-                    id='autocomplete-size-medium-multi'
-                    getOptionLabel={option => option.City + ' ' + option.SubCity || ''}
-                    renderInput={params => (
-                      <CustomTextField
-                        {...params}
-                        size='small'
-                        label='Ville'
-                        placeholder='Ville'
-                        {...register('City', { required: true })}
+                  <Controller
+                    name={'cp'}
+                    control={control}
+                    render={({ field }) => (
+                      <CustomAutocomplete
+                        options={citiesOptions}
+                        id='autocomplete-size-medium-multi'
+                        {...field}
+                        sx={{ mb: 4 }}
+                        onChange={(e, v) => field.onChange(v)}
+                        getOptionLabel={option => {
+                          return option.label ?? ''
+                        }}
+                        isOptionEqualToValue={(option, val) => {
+                          return option.value === val.value
+                        }}
+                        renderInput={params => (
+                          <CustomTextField
+                            {...params}
+                            size='small'
+                            label='Ville'
+                            placeholder='Ville'
+                            helperText={'Ce champs requis'}
+                          />
+                        )}
                       />
                     )}
                   />
-                </Grid>
-                <Grid item xs={12}>
-                  <CustomTextField
-                    value={cp}
-                    fullWidth
-                    label='Code postale'
-                    {...register('cp', { required: true })}
-                    placeholder='Code postale'
-                    sx={{ position: 'relative' }}
+
+                  <Controller
+                    name={'adress'}
+                    control={control}
+                    render={({ field }) => (
+                      <CustomTextField
+                        {...field}
+                        sx={{ mb: 4 }}
+                        variant='outlined'
+                        size='small'
+                        fullWidth
+                        label={'Addresse '}
+                        error={!!errors['adress']}
+                        // helperText={errors['adress']?.message}
+                        helperText={'Ce champs requis'}
+                      />
+                    )}
                   />
-                  {errors.cp && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                  {watch('cp') && (
-                    <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>{watch('cp').length}/50</span>
-                  )}
-                </Grid>
-                <Grid item xs={12}>
-                  <CustomTextField
-                    fullWidth
-                    label='Addresse'
-                    {...register('adress', { required: true })}
-                    placeholder='Addresse'
-                    sx={{ position: 'relative' }}
-                  />
-                  {errors.adress && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                  {watch('adress') && (
-                    <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>{watch('adress').length}/50</span>
-                  )}
-                </Grid>
-                {/* Ajoutez les autres champs de saisie de la même manière */}
-                <Grid item xs={12}>
-                  <Button variant='contained' type='submit'>
-                    Envoyer
-                  </Button>{' '}
-                  {/* Utilisez Button avec type='submit' */}
-                </Grid>
-              </Grid>
-            </form>
-          </Box>
+                  <Button type='submit' variant='contained' color='primary' sx={{ mt: 5 }}>
+                    Soumettre
+                  </Button>
+                </form>
+              </DatePickerWrapper>
+            </Box>
+          </DatePickerWrapper>
         </DialogContent>
       </Dialog>
     </>

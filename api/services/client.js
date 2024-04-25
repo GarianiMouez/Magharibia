@@ -83,10 +83,14 @@ const getByUsername = async (username) => {
   }
 };
 const create = async (data) => {
+  console.log("serrr");
   try {
+    console.log("serrrrr");
     const result = await Client.create(data);
     return result;
   } catch (error) {
+    console.log("service eror");
+    console.log(error);
     throw error;
   }
 };

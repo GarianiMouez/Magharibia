@@ -464,7 +464,7 @@ const ShipList = ({ apiData, clients, campanies }) => {
                                     required
                                     {...params}
                                     size='small'
-                                    label='Client'
+                                    label='Entreprise'
                                     placeholder='Client'
                                     {...register('client', { required: true })}
                                   />

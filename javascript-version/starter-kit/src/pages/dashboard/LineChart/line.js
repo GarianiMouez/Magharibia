@@ -58,7 +58,13 @@ const AnalyticsLineChart = ({ dataSeries, year, dataSetChange, title }) => {
       <CardHeader
         subheader=''
         action={
-          <Select labelId='demo-select-small-label' id='demo-select-small' value={selectedYear} onChange={handleChange}>
+          <Select
+            size='small'
+            labelId='demo-select-small-label'
+            id='demo-select-small'
+            value={selectedYear}
+            onChange={handleChange}
+          >
             {year.map((yearOption, index) => (
               <MenuItem key={index} value={yearOption}>
                 {yearOption}

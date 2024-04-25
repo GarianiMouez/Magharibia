@@ -11,6 +11,33 @@ const deleteFunction = async id => {
   }
 }
 
+const FetchContract = async () => {
+  try {
+    const contractsRes = await axios.get('http://localhost:4500/econtract')
+    const campanysRes = await axios.get('http://localhost:4500/campanies')
+    const shipsRes = await axios.get('http://localhost:4500/ship')
+
+    const contracts = contractsRes.data
+    const campanies = campanysRes.data
+    const ships = shipsRes.data
+
+    const result = contracts.map(contract => {
+      const ship = ships.find(ship => ship.id === contract.ShipId && ship.ownerType === 'enterprise')
+      const campany = campanies.find(campany => campany.id === contract.CompanyId)
+      return {
+        ...contract,
+        shipName: ship?.name,
+        campanyName: campany.Ename ? campany.Ename : 'test',
+        campany: campany,
+        ship: ship
+      }
+    })
+    return result
+  } catch (error) {
+    return []
+  }
+}
+
 const fetchData = async () => {
   try {
     const res = await axios.get('http://localhost:4500/econtract')
@@ -57,5 +84,6 @@ module.exports = {
   fetchData,
   AddEcontract,
   updateFunction,
+  FetchContract,
   getByid
 }

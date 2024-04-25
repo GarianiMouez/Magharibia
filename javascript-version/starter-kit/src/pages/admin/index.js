@@ -1,6 +1,8 @@
 // ** React Imports
-import { useState, useEffect, forwardRef, Fragment } from 'react'
-import { useForm } from 'react-hook-form'
+import { useState, useEffect, forwardRef, Fragment, useMemo } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import * as yup from 'yup'
+import { yupResolver } from '@hookform/resolvers/yup'
 
 import { deleteFunction, fetchData, AddFunction, updateFunction, getByid } from 'src/APIs/adminApis'
 import TableHeader from '../admin/TableHeader/index'
@@ -66,8 +68,8 @@ import CustomTextField from 'src/@core/components/mui/text-field'
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import DeleteDialog from '../admin/dialogs/deleteDialog'
 import FileUploaderSingle from 'src/views/forms/form-elements/file-uploader/FileUploaderSingle'
-import { tr } from 'date-fns/locale'
-import email from 'src/store/apps/email'
+
+import { sendEmail } from 'src/APIs/sendEmail'
 
 // ** Styled component for the link in the dataTable
 const LinkStyled = styled(Link)(({ theme }) => ({
@@ -93,40 +95,6 @@ const renderClient = row => {
   }
 }
 
-// const defaultColumns = [
-//   {
-//     flex: 0.25,
-//     field: 'firstName',
-//     minWidth: 150,
-//     headerName: 'Prénom',
-//     renderCell: params => {
-//       return params.value ? 'Super Admin' : 'Admin'
-//     }
-//   },
-
-//   {
-//     flex: 0.25,
-//     field: 'lastName',
-//     minWidth: 150,
-//     headerName: 'Nom'
-//   },
-//   {
-//     flex: 0.25,
-//     field: 'isSuperAdmin',
-//     minWidth: 150,
-//     headerName: 'Status',
-//     renderCell: params => {
-//       return params.value ? 'Super Admin' : 'Admin'
-//     }
-//   },
-
-//   {
-//     flex: 0.25,
-//     field: 'email',
-//     minWidth: 150,
-//     headerName: 'E-mail'
-//   }
-// ]
 const defaultColumns = [
   {
     flex: 0.25,
@@ -197,6 +165,28 @@ const CustomInput = forwardRef((props, ref) => {
 
 /* eslint-enable */
 const InvoiceList = ({ apiData }) => {
+  const schema = useMemo(
+    () =>
+      yup.object({
+        username: yup.string().required(),
+        email: yup.string().email().required(),
+        firstName: yup.string().required(),
+        lastName: yup.string().required(),
+        isSuperAdmin: yup.mixed().required()
+      }),
+    []
+  )
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset
+  } = useForm({
+    defaultValues: {},
+    mode: 'onChange',
+    resolver: yupResolver(schema)
+  })
+
   const handleImageUpload = image => {
     setSelectedImage(image)
   }
@@ -242,6 +232,10 @@ const InvoiceList = ({ apiData }) => {
   }
   const handleClickUpdate = async row => {
     let admin = await getByid(row.id)
+    reset({
+      ...row,
+      isSuperAdmin: { value: row.isSuperAdmin, label: !row.isSuperAdmin ? 'Admin' : 'Super Admin' }
+    })
     console.log(admin)
     setSelectedAdmin(admin)
     setShowUpdate(true)
@@ -258,6 +252,8 @@ const InvoiceList = ({ apiData }) => {
 
   const addClinet = async data => {
     const add = await AddFunction(data)
+    console.log(data.data)
+
     if (add) {
       const newData = await fetchData()
       setFilteredData(newData)
@@ -297,13 +293,6 @@ const InvoiceList = ({ apiData }) => {
   const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 5 })
 
   // ** Hooks
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    watch,
-    reset
-  } = useForm()
 
   const handleFilter = val => {
     setValue(val)
@@ -437,180 +426,117 @@ const InvoiceList = ({ apiData }) => {
                         </Typography>
                       </Box>
                       <Box sx={{ marginTop: '5%' }}>
-                        <form onSubmit={handleSubmit(onSubmit)}>
-                          <Grid container spacing={2}>
-                            <Grid item xs={12}>
-                              <CustomTextField
-                                value={selectedAdmin?.firstName}
-                                fullWidth
-                                label='Prénom'
-                                {...register('firstName', { required: true })}
-                                onChange={e => setSelectedAdmin({ ...selectedAdmin, firstName: e.target.value })}
-                                placeholder='Prénom'
-                                sx={{ position: 'relative' }}
-                              />
-                              {errors.firstName && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                              {watch('firstName') && (
-                                <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>
-                                  {watch('firstName').length}/50
-                                </span>
-                              )}
-                            </Grid>
-                            <Grid item xs={12}>
-                              <CustomTextField
-                                value={selectedAdmin?.lastName}
-                                fullWidth
-                                label='Nom'
-                                {...register('lastName', { required: true })}
-                                onChange={e => setSelectedAdmin({ ...selectedAdmin, lastName: e.target.value })}
-                                placeholder='Nom'
-                                sx={{ position: 'relative' }}
-                              />
-                              {errors.firstName && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                              {watch('firstName') && (
-                                <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>
-                                  {watch('firstName').length}/50
-                                </span>
-                              )}
-                            </Grid>
+                        <DatePickerWrapper>
+                          <form
+                            onSubmit={handleSubmit(data => {
+                              console.log('mouezzzzzzzz', data)
+                              let x = { ...data, isSuperAdmin: data.isSuperAdmin.value }
+                              console.log('xxxxxx', x)
+                              setShowUpdate(false)
+                              updateAdmin(data.id, x)
+                            })}
+                          >
+                            <Controller
+                              name={'username'}
+                              control={control}
+                              render={({ field }) => (
+                                <CustomTextField
+                                  {...field}
+                                  sx={{ mb: 4 }}
+                                  variant='outlined'
+                                  size='small'
+                                  fullWidth
+                                  label={'Identifant'}
+                                  error={!!errors['username']}
+                                  helperText={'Ce champs requis'}
 
-                            <Grid item xs={12}>
-                              <CustomTextField
-                                value={selectedAdmin?.username}
-                                fullWidth
-                                label='Username/Identifiant'
-                                {...register('username', { required: true })}
-                                onChange={e => setSelectedAdmin({ ...selectedAdmin, username: e.target.value })}
-                                placeholder='username'
-                                sx={{ position: 'relative' }}
-                              />
-                              {errors.username && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                              {watch('username') && (
-                                <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>
-                                  {watch('username').length}/50
-                                </span>
+                                  // helperText={errors['username']?.message}
+                                />
                               )}
-                            </Grid>
-                            {/* <Grid item xs={12}>
-                              <CustomTextField
-                                fullWidth
-                                label='Mot de passe'
-                                value={selectedAdmin?.password}
-                                {...register('password', { required: true })}
-                                id='form-layouts-basic-password'
-                                onChange={handleChange('password')}
-                                type={values.showPassword ? 'text' : 'password'}
-                                aria-describedby='form-layouts-basic-password-helper'
-                                InputProps={{
-                                  endAdornment: (
-                                    <InputAdornment position='end'>
-                                      <IconButton
-                                        edge='end'
-                                        onClick={handleClickShowPassword}
-                                        onMouseDown={e => e.preventDefault()}
-                                        aria-label='toggle password visibility'
-                                      >
-                                        <Icon
-                                          fontSize='1.25rem'
-                                          icon={values.showPassword ? 'tabler:eye' : 'tabler:eye-off'}
-                                        />
-                                      </IconButton>
-                                    </InputAdornment>
-                                  )
-                                }}
-                              />
-                            </Grid>
-                            <Grid item xs={12}>
-                              <CustomTextField
-                                fullWidth
-                                label='Confirmez le mot de passe'
-                                value={selectedAdmin?.password}
-                                id='form-layouts-confirm-password'
-                                {...register('confirmPassword', { required: true })}
-                                onChange={handleConfirmPassChange('password')}
-                                aria-describedby='form-layouts-confirm-password-helper'
-                                type={confirmPassValues.showPassword ? 'text' : 'password'}
-                                error={passwordError} // Ajoutez une erreur si les mots de passe ne correspondent pas
-                                InputProps={{
-                                  endAdornment: (
-                                    <InputAdornment position='end'>
-                                      <IconButton
-                                        edge='end'
-                                        onClick={handleClickConfirmPassShow}
-                                        onMouseDown={e => e.preventDefault()}
-                                        aria-label='toggle password visibility'
-                                      >
-                                        <Icon
-                                          fontSize='1.25rem'
-                                          icon={confirmPassValues.showPassword ? 'tabler:eye' : 'tabler:eye-off'}
-                                        />
-                                      </IconButton>
-                                    </InputAdornment>
-                                  )
-                                }}
-                              />
-                              {passwordError && <span style={{ color: 'red' }}>Passwords do not match</span>}
-                            </Grid> */}
-                            <Grid item xs={12}>
-                              <CustomTextField
-                                fullWidth
-                                value={selectedAdmin?.email}
-                                label='E-mail'
-                                {...register('email', { required: true, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ })}
-                                placeholder='E-mail'
-                                onChange={e => setSelectedAdmin({ ...selectedAdmin, email: e.target.value })}
-                                sx={{ position: 'relative' }}
-                              />
-                              {errors.email && (
-                                <span style={{ color: 'red' }}>
-                                  Ce champ est requis et doit être une adresse e-mail valide.
-                                </span>
+                            />
+                            <Controller
+                              name={'email'}
+                              control={control}
+                              render={({ field }) => (
+                                <CustomTextField
+                                  {...field}
+                                  sx={{ mb: 4 }}
+                                  variant='outlined'
+                                  size='small'
+                                  fullWidth
+                                  label={'Email'}
+                                  error={!!errors['email']}
+                                  helperText={errors['email']?.message}
+                                />
                               )}
-                              {watch('email') && (
-                                <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>
-                                  {watch('email').length}/50
-                                </span>
+                            />
+                            <Controller
+                              name={'firstName'}
+                              control={control}
+                              render={({ field }) => (
+                                <CustomTextField
+                                  {...field}
+                                  sx={{ mb: 4 }}
+                                  variant='outlined'
+                                  size='small'
+                                  fullWidth
+                                  label={'Prénom'}
+                                  error={!!errors['firstName']}
+                                  helperText={errors['firstName']?.message}
+                                />
                               )}
-                            </Grid>
-                            <Grid item xs={12}>
-                              <CustomAutocomplete
-                                value={selectedAdmin?.isSuperAdmin ? 'Super Admin' : 'Admin'}
-                                options={['Admin', 'Super Admin']}
-                                onChange={(event, val) => {
-                                  const isSuperAdminValue = val === 'Admin' ? false : true
-                                  setValues('isSuperAdmin', isSuperAdminValue)
-                                  console.log(val)
-                                }}
-                                id='autocomplete-size-medium-multi'
-                                renderInput={params => (
-                                  <CustomTextField
-                                    {...params}
-                                    size='small'
-                                    label='Status'
-                                    placeholder='Status'
-                                    {...register('isSuperAdmin', { required: true })}
-                                  />
-                                )}
-                              />
-                            </Grid>
-                            {/* <Grid item xs={12} sx={{ mt: 1 }}>
-                              <label>Importer Image</label>
-
-                              <FileUploaderSingle
-                                register={name => register('image', { required: true, name })}
-                                onImageUpload={handleImageUpload}
-                              />
-                              {errors.fileUpload && (
-                                <span style={{ color: 'red' }}>Veuillez sélectionner un fichier.</span>
+                            />
+                            <Controller
+                              name={'lastName'}
+                              control={control}
+                              render={({ field }) => (
+                                <CustomTextField
+                                  {...field}
+                                  sx={{ mb: 4 }}
+                                  variant='outlined'
+                                  size='small'
+                                  fullWidth
+                                  label={'Nom'}
+                                  error={!!errors['lastName']}
+                                  helperText={errors['lastName']?.message}
+                                />
                               )}
-                            </Grid> */}
-                            <Grid item xs={12}>
-                              <Button variant='contained' type='submit'>
-                                Envoyer
-                              </Button>
-                            </Grid>
-                          </Grid>
-                        </form>
+                            />
+                            <Controller
+                              name={'isSuperAdmin'}
+                              control={control}
+                              render={({ field }) => (
+                                <CustomAutocomplete
+                                  options={[
+                                    { label: 'Super Admin', value: true },
+                                    { label: 'Admin', value: false }
+                                  ]}
+                                  id='autocomplete-size-medium-multi'
+                                  {...field}
+                                  sx={{ mb: 4 }}
+                                  getOptionLabel={option => option.label ?? ''}
+                                  onChange={(e, v) => field.onChange(v)}
+                                  isOptionEqualToValue={(option, val) => {
+                                    return option.value === val.value
+                                  }}
+                                  renderInput={params => (
+                                    <CustomTextField
+                                      {...params}
+                                      size='small'
+                                      label='Role'
+                                      placeholder='Role'
+                                      error={!!errors['isSuperAdmin']}
+                                      helperText={'Ce champs requis'}
+                                    />
+                                  )}
+                                />
+                              )}
+                            />
+                            <Button type='submit' variant='contained' color='primary' sx={{ mt: 5 }}>
+                              Soumettre
+                            </Button>
+                          </form>
+                        </DatePickerWrapper>
                       </Box>
 
                       <Box

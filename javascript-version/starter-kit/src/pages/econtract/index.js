@@ -1,32 +1,26 @@
 // ** React Imports
-import { useState, useEffect, forwardRef, Fragment } from 'react'
-import { useForm } from 'react-hook-form'
+import { useState, useEffect, forwardRef, Fragment, useMemo } from 'react'
+import { useForm, Controller, useWatch } from 'react-hook-form'
+import * as yup from 'yup'
+import { yupResolver } from '@hookform/resolvers/yup'
 
 import { deleteFunction, fetchData, updateFunction, getByid, FetchContract } from 'src/APIs/contratEntreprise'
 import { formatDate, getShipsPerCompany } from 'src/APIs/utilFunction'
 import TableHeader from './TableHeader/index'
 import axios from 'axios'
 
-import DatePicker from 'react-datepicker'
-
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 
-// ** Next Import
-import Link from 'next/link'
-
-// ** MUI Imports
 import Fade from '@mui/material/Fade'
 
 import Box from '@mui/material/Box'
 import Grid from '@mui/material/Grid'
 import Card from '@mui/material/Card'
-import Tooltip from '@mui/material/Tooltip'
+
 import { styled } from '@mui/material/styles'
-import MenuItem from '@mui/material/MenuItem'
-import CardHeader from '@mui/material/CardHeader'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import CardContent from '@mui/material/CardContent'
+
 import { DataGrid, gridColumnsTotalWidthSelector } from '@mui/x-data-grid'
 import Button from '@mui/material/Button'
 
@@ -56,48 +50,11 @@ const CustomCloseButton = styled(IconButton)(({ theme }) => ({
 // ** Icon Imports
 import Icon from 'src/@core/components/icon'
 
-// ** Third Party Imports
-import format from 'date-fns/format'
-
-// ** Store & Actions Imports
-import { useSelector } from 'react-redux'
-
-// ** Utils Import
-import { getInitials } from 'src/@core/utils/get-initials'
-
-// ** Custom Components Imports
-import CustomChip from 'src/@core/components/mui/chip'
-import CustomAvatar from 'src/@core/components/mui/avatar'
 import OptionsMenu from 'src/@core/components/option-menu'
 import CustomTextField from 'src/@core/components/mui/text-field'
 
 // ** Styled Components
 import DeleteDialog from './dialogs/deleteDialog'
-import { secondsInDay } from 'date-fns'
-
-// ** Styled component for the link in the dataTable
-const LinkStyled = styled(Link)(({ theme }) => ({
-  textDecoration: 'none',
-  fontSize: theme.typography.body1.fontSize,
-  color: `${theme.palette.primary.main} !important`
-}))
-
-// ** renders campany column
-const rendercampany = row => {
-  if (row.avatar.length) {
-    return <CustomAvatar src={row.avatar} sx={{ mr: 2.5, width: 38, height: 38 }} />
-  } else {
-    return (
-      <CustomAvatar
-        skin='light'
-        color={row.avatarColor || 'primary'}
-        sx={{ mr: 2.5, width: 38, height: 38, fontWeight: 500, fontSize: theme => theme.typography.body1.fontSize }}
-      >
-        {getInitials(row.name || 'John Doe')}
-      </CustomAvatar>
-    )
-  }
-}
 
 const defaultColumns = [
   {
@@ -150,49 +107,62 @@ const defaultColumns = [
     minWidth: 20,
     headerName: 'Ship'
   }
-  // {
-  //   flex: 0.25,
-  //   field: 'City',
-  //   minWidth: 100,
-  //   headerName: 'Ville',
-  //   renderCell: ({ row }) => <Typography sx={{ color: 'text.secondary' }}>{row.City}</Typography>
-  // }
 ]
-/* eslint-disable */
-const CustomInput = forwardRef((props, ref) => {
-  const startDate = props.start !== null ? props.start : ''
-  // const startDate = props.start !== null ? format(props.start, 'MM/dd/yyyy') : ''
-  // const endDate = props.end !== null ? ` - ${format(props.end, 'MM/dd/yyyy')}` : null
-  const value = `${startDate}`
-  props.start === null && props.dates.length && props.setDates ? props.setDates([]) : null
-  const updatedProps = { ...props }
-  delete updatedProps.setDates
-  return <CustomTextField fullWidth inputRef={ref} {...updatedProps} label={props.label || ''} value={value} />
-})
 
-/* eslint-enable */
-const InvoiceList = ({ apiData, campanies }) => {
-  ///****DATA*****////
-
-  const [minDate, setMinDate] = useState(new Date())
-  const [maxDate, setMaxDate] = useState(new Date())
+const InvoiceList = ({ apiData, campanies, ships }) => {
+  const campaniesOption = campanies.map(entr => ({
+    label: entr.Ename,
+    value: entr.id
+  }))
 
   const [filteredData, setFilteredData] = useState(apiData)
 
-  /// delete
   const [showDelete, setShowDelete] = useState(false)
   const [showUpdate, setShowUpdate] = useState(false)
   const [selectedId, setSelectedID] = useState(-1)
   const [selectedContract, setSelectedContract] = useState(null)
-  const [SelectedcampanyShips, setSelectedcampanyShips] = useState([])
 
-  // Gestion de la suppression
+  const [value, setValue] = useState('')
+  const [selectedRows, setSelectedRows] = useState([])
+  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 5 })
+
+  const schema = useMemo(
+    () =>
+      yup.object({
+        campany: yup.mixed().required(),
+        ship: yup.mixed().required(),
+        motor: yup.number().required().positive().integer(),
+        Coqu: yup.number().required().positive().integer(),
+        SDate: yup.date().required(),
+        EDate: yup.date().required()
+      }),
+    []
+  )
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset
+  } = useForm({
+    defaultValues: {},
+    mode: 'onChange',
+    resolver: yupResolver(schema)
+  })
+
   const handleClickDelete = row => {
     setShowDelete(true)
     setSelectedID(row.id)
   }
   const handleClickUpdate = async row => {
     const contract = await getByid(row.id)
+    console.log(contract)
+    reset({
+      ...contract,
+      SDate: row.SDate ? new Date(row.SDate).toISOString().split('T')[0] : '',
+      EDate: row.EDate ? new Date(row.EDate).toISOString().split('T')[0] : '',
+      campany: campaniesOption.find(option => option.value === contract.CompanyId) ?? null,
+      ship: shipsOption.find(option => option.value === contract.ShipId) ?? null
+    })
 
     setSelectedContract(row)
     // console.log
@@ -240,51 +210,31 @@ const InvoiceList = ({ apiData, campanies }) => {
     reset()
   }
 
-  // ** State
-  const [dates, setDates] = useState([])
-  const [value, setValue] = useState('')
-  const [statusValue, setStatusValue] = useState('')
-  const [endDateRange, setEndDateRange] = useState(null)
-  const [selectedRows, setSelectedRows] = useState([])
-  const [startDateRange, setStartDateRange] = useState(null)
-  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 5 })
-  const [city, setCity] = useState(null)
-  const [cp, setCp] = useState(null)
+  const watchClient = useWatch({ name: 'campany', control })
+  console.log('cammb,dm', watchClient)
 
-  // ** Hooks
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    watch,
-    reset
-  } = useForm()
+  const shipsOption = ships
+    .filter(ship => {
+      return ship.ownerId === watchClient?.value && ship.ownerType === 'enterprise'
+    })
+    .map(filteredShip => {
+      return { label: filteredShip.name, value: filteredShip.id }
+    })
+  console.log(shipsOption)
+  console.log('ships perclient', shipsOption)
+
+  console.log('eeee', errors)
 
   const handleFilter = val => {
     setValue(val)
   }
 
-  // const filteredRows = filteredData.filter(row => row.netAmount.toLowerCase().includes(value.toLowerCase()))
   const filteredRows = filteredData.filter(
     row =>
-      row.SDate.toLowerCase().includes(value.toLowerCase()) ||
       row.netAmount.toString().toLowerCase().includes(value.toString().toLowerCase()) ||
       row.shipName.toString().toLowerCase().includes(value.toString().toLowerCase()) ||
       row.campanyName.toString().toLowerCase().includes(value.toString().toLowerCase())
   )
-
-  const handleStatusValue = e => {
-    setStatusValue(e.target.value)
-  }
-
-  const handleOnChangeRange = dates => {
-    const [start, end] = dates
-    if (start !== null && end !== null) {
-      setDates(dates)
-    }
-    setStartDateRange(start)
-    setEndDateRange(end)
-  }
 
   const columns = [
     ...defaultColumns,
@@ -403,119 +353,153 @@ const InvoiceList = ({ apiData, campanies }) => {
                           Modifier les informations du contrat
                         </Typography>
                       </Box>
-                      <form onSubmit={handleSubmit(onSubmit)}>
-                        <Grid container spacing={2}>
-                          <Grid item xs={23}>
-                            <DatePickerWrapper>
-                              <DatePicker
-                                id='min-date'
-                                value={selectedContract ? formatDate(selectedContract.SDate) : new Date()}
-                                onChange={date => setSelectedContract({ ...selectedContract, SDate: date })}
-                                customInput={<CustomInput label='Effet Du' start={selectedContract?.SDate} />}
+                      <form
+                        onSubmit={handleSubmit(data => {
+                          let x = { ...data, ShipId: data.ship.value, CompanyId: data.campany.value }
+
+                          console.log('sikosiko', x)
+
+                          setShowUpdate(false)
+
+                          updateCampany(x?.id, x)
+                        })}
+                      >
+                        <Controller
+                          name={'SDate'}
+                          control={control}
+                          render={({ field }) => {
+                            // console.log(field)
+                            return (
+                              <CustomTextField
+                                {...field}
+                                sx={{ mb: 4 }}
+                                type='date'
+                                variant='outlined'
+                                size='small'
+                                fullWidth
+                                label={'Effet Du '}
+                                error={!!errors['SDate']}
+                                // helperText={errors['SDate']?.message}
+                                helperText={'Ce champs requis'}
                               />
-                              <Grid item xs={12} style={{ marginBottom: '10px' }}></Grid>
-
-                              <DatePicker
-                                id='min-date'
-                                value={selectedContract ? selectedContract.Sdate : new Date()}
-                                onChange={date => setSelectedContract({ ...selectedContract, EDate: date })}
-                                customInput={<CustomInput label='Effet Au' start={selectedContract?.EDate} />}
+                            )
+                          }}
+                        />
+                        <Controller
+                          name={'EDate'}
+                          control={control}
+                          render={({ field }) => {
+                            // console.log(field)
+                            return (
+                              <CustomTextField
+                                {...field}
+                                sx={{ mb: 4 }}
+                                type='date'
+                                variant='outlined'
+                                size='small'
+                                fullWidth
+                                label={'Effet Au'}
+                                error={!!errors['EDate']}
+                                // helperText={errors['SDate']?.message}
+                                helperText={'Ce champs requis'}
                               />
-                            </DatePickerWrapper>
-                          </Grid>
-
-                          <Grid item xs={12}>
+                            )
+                          }}
+                        />
+                        <Controller
+                          name={'Coqu'}
+                          control={control}
+                          render={({ field }) => (
                             <CustomTextField
+                              {...field}
+                              sx={{ mb: 4 }}
+                              variant='outlined'
+                              size='small'
                               fullWidth
-                              value={selectedContract?.Coqu || ''}
-                              label='Coqu'
-                              {...register('Coqu', {
-                                required: 'Ce champ est requis.',
-                                pattern: { value: /^\d+$/, message: 'Ce champ doit être numérique.' }
-                              })}
-                              placeholder='Coqu'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedContract({ ...selectedContract, Coqu: e.target.value })}
+                              label={'Coqu'}
+                              error={!!errors['Coqu']}
+                              helperText={'Ce champs requis'}
+                              // helperText={errors['username']?.message}
                             />
-                            {errors.Coqu && <span style={{ color: 'red' }}>{errors.Coqu.message}</span>}
-                          </Grid>
-
-                          <Grid item xs={12}>
+                          )}
+                        />
+                        <Controller
+                          name={'motor'}
+                          control={control}
+                          render={({ field }) => (
                             <CustomTextField
+                              {...field}
+                              sx={{ mb: 4 }}
+                              variant='outlined'
+                              size='small'
                               fullWidth
-                              value={selectedContract?.motor || ''}
-                              label='Moteur'
-                              {...register('motor', {
-                                required: 'Ce champ est requis.',
-                                pattern: { value: /^\d+$/, message: 'Ce champ doit être numérique.' }
-                              })}
-                              placeholder='motor'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedContract({ ...selectedContract, motor: e.target.value })}
+                              label={'Moteur'}
+                              error={!!errors['motor']}
+                              helperText={'Ce champs requis'}
+                              // helperText={errors['username']?.message}
                             />
-                            {errors.motor && <span style={{ color: 'red' }}>{errors.motor.message}</span>}
-                          </Grid>
-
-                          <Grid item xs={12}>
+                          )}
+                        />
+                        <Controller
+                          name={'campany'}
+                          control={control}
+                          render={({ field }) => (
                             <CustomAutocomplete
-                              options={campanies}
-                              value={selectedContract?.campany}
-                              onChange={async (event, val) => {
-                                if (val) {
-                                  setSelectedcampanyShips(await getShipsPerCompany(val.id))
-
-                                  setSelectedContract({ ...selectedContract, campanyId: val.id, campany: val })
-                                } else {
-                                  setSelectedcampanyShips([])
-                                  setSelectedContract({ ...selectedContract, ShipId: null, ship: null, shipName: '' })
-                                  setSelectedContract({ ...selectedContract, campanyId: null, campany: null })
-                                }
-                              }}
+                              options={campaniesOption}
                               id='autocomplete-size-medium-multi'
-                              getOptionLabel={option => option.Ename}
+                              {...field}
+                              sx={{ mb: 4 }}
+                              onChange={(e, v) => field.onChange(v)}
+                              getOptionLabel={option => {
+                                return option.label
+                              }}
+                              isOptionEqualToValue={(option, val) => {
+                                return option.value === val.value
+                              }}
                               renderInput={params => (
                                 <CustomTextField
                                   {...params}
                                   size='small'
                                   label='Entreprise'
                                   placeholder='Entreprise'
-                                  required
+                                  helperText={'Ce champs requis'}
                                 />
                               )}
                             />
-                          </Grid>
-
-                          <Grid item xs={12}>
+                          )}
+                        />
+                        {/* bateaux ici */}
+                        <Controller
+                          name={'Bateaux'}
+                          control={control}
+                          render={({ field }) => (
                             <CustomAutocomplete
-                              options={SelectedcampanyShips}
-                              value={selectedContract?.ship}
-                              onChange={(event, val) => {
-                                if (val) {
-                                  setSelectedContract({ ...selectedContract, ShipId: val.id, ship: val })
-                                } else {
-                                  setSelectedContract({ ...selectedContract, ShipId: null, ship: null, shipName: '' })
-                                }
-                              }}
+                              options={shipsOption}
                               id='autocomplete-size-medium-multi'
-                              getOptionLabel={option => option.name || 'pas options'}
+                              {...field}
+                              sx={{ mb: 4 }}
+                              onChange={(e, v) => field.onChange(v)}
+                              getOptionLabel={option => {
+                                return option.label
+                              }}
+                              isOptionEqualToValue={(option, val) => {
+                                return option.value === val.value
+                              }}
                               renderInput={params => (
                                 <CustomTextField
                                   {...params}
                                   size='small'
                                   label='Bateaux'
                                   placeholder='Bateaux'
-                                  required
+                                  helperText={'Ce champs requis'}
                                 />
                               )}
                             />
-                          </Grid>
-
-                          <Grid item xs={12}>
-                            <Button variant='contained' type='submit'>
-                              Enregistrer
-                            </Button>{' '}
-                          </Grid>
-                        </Grid>
+                          )}
+                        />
+                        <Button type='submit' variant='contained' color='primary' sx={{ mt: 5 }}>
+                          Soumettre
+                        </Button>
                       </form>
 
                       <Box
@@ -549,9 +533,10 @@ export const getStaticProps = async () => {
     const contracts = contractsRes.data
     const campanies = campanysRes.data
     const ships = shipsRes.data
+    console.log(campanies)
 
     const result = contracts.map(contract => {
-      const ship = ships.find(ship => ship.id === contract.ShipId)
+      const ship = ships.find(ship => ship.id === contract.ShipId && ship.ownerType === 'enterprise')
       const campany = campanies.find(campany => campany.id === contract.CompanyId)
       return {
         ...contract,
@@ -566,7 +551,8 @@ export const getStaticProps = async () => {
     return {
       props: {
         apiData: result,
-        campanies
+        campanies,
+        ships
       }
     }
   } catch (error) {

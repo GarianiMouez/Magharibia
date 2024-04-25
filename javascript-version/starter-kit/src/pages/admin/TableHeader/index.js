@@ -63,6 +63,7 @@ import OptionsMenu from 'src/@core/components/option-menu'
 import CustomTextField from 'src/@core/components/mui/text-field'
 import InputAdornment from '@mui/material/InputAdornment'
 import FileUploaderSingle from 'src/views/forms/form-elements/file-uploader/FileUploaderSingle'
+import { sendEmail } from 'src/APIs/sendEmail'
 
 // ** Styled Components
 
@@ -118,7 +119,7 @@ const TableHeader = props => {
 
     reset()
   }
-  const onSubmit = data => {
+  const onSubmit = async data => {
     if (data.password !== data.confirmPassword) {
       setPasswordError(true)
     } else {
@@ -133,8 +134,17 @@ const TableHeader = props => {
       for (const key in submittedData) {
         formData.append(key, submittedData[key])
       }
+      console.log('heder', data)
 
       props.Addadmin(formData)
+
+      let body = {
+        senderEmail: 'mouezghariani2@gmail.com',
+        recipientEmail: data.email,
+        subject: 'Inscription chez Maghribia Assurance',
+        text: `Cher ${data.firstName}\n \n \n Nous sommes ravi de vous compte est créé avec success \n  \t username : ${data.username} \n \t mot de passe : ${data.password}\n Merci de votre conféance \n\n Cordiallement`
+      }
+      await sendEmail(body)
     }
   }
 

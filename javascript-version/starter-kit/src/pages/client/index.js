@@ -1,8 +1,12 @@
 // ** React Imports
-import { useState, useEffect, forwardRef, Fragment } from 'react'
-import { useForm } from 'react-hook-form'
+import { useState, useEffect, forwardRef, Fragment, useMemo } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import * as yup from 'yup'
+import { yupResolver } from '@hookform/resolvers/yup'
 
 import { deleteFunction, fetchData, AddFunction, updateFunction, getByid } from 'src/APIs/clientApis'
+import { sendEmail } from 'src/APIs/sendEmail'
+
 import TableHeader from './TableHeader/index'
 import axios from 'axios'
 
@@ -53,13 +57,6 @@ const CustomCloseButton = styled(IconButton)(({ theme }) => ({
 // ** Icon Imports
 import Icon from 'src/@core/components/icon'
 
-// ** Third Party Imports
-import format from 'date-fns/format'
-import DatePicker from 'react-datepicker'
-
-// ** Store & Actions Imports
-import { useSelector } from 'react-redux'
-
 // ** Utils Import
 import { getInitials } from 'src/@core/utils/get-initials'
 
@@ -67,11 +64,13 @@ import { getInitials } from 'src/@core/utils/get-initials'
 import CustomChip from 'src/@core/components/mui/chip'
 import CustomAvatar from 'src/@core/components/mui/avatar'
 import OptionsMenu from 'src/@core/components/option-menu'
-import CustomTextField from 'src/@core/components/mui/text-field'
+// import TextField from 'src/@core/components/mui/text-field'
 
 // ** Styled Components
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import DeleteDialog from './dialogs/deleteDialog'
+import { TextField } from '@mui/material'
+import CustomTextField from 'src/@core/components/mui/text-field'
 
 // ** Styled component for the link in the dataTable
 const LinkStyled = styled(Link)(({ theme }) => ({
@@ -96,6 +95,11 @@ const renderClient = row => {
     )
   }
 }
+
+const citiesOptions = cities.map(element => ({
+  value: element.cp,
+  label: element.City + ' ' + element.SubCity
+}))
 
 const defaultColumns = [
   {
@@ -143,27 +147,52 @@ const defaultColumns = [
     renderCell: ({ row }) => <Typography sx={{ color: 'text.secondary' }}>{row.City}</Typography>
   }
 ]
-/* eslint-disable */
-const CustomInput = forwardRef((props, ref) => {
-  const startDate = props.start !== null ? format(props.start, 'MM/dd/yyyy') : ''
-  const endDate = props.end !== null ? ` - ${format(props.end, 'MM/dd/yyyy')}` : null
-  const value = `${startDate}${endDate !== null ? endDate : ''}`
-  props.start === null && props.dates.length && props.setDates ? props.setDates([]) : null
-  const updatedProps = { ...props }
-  delete updatedProps.setDates
-  return <CustomTextField fullWidth inputRef={ref} {...updatedProps} label={props.label || ''} value={value} />
-})
 
 /* eslint-enable */
 const InvoiceList = ({ apiData }) => {
   ///****DATA*****////
   const [filteredData, setFilteredData] = useState(apiData)
+  const [selectedClient, setSelectedClient] = useState({
+    Fname: '',
+    Lname: '',
+    email: '',
+    username: '',
+    cp: null,
+    adress: '',
+    tlf: ''
+  })
+
+  const schema = useMemo(
+    () =>
+      yup.object({
+        email: yup.string().email().required(),
+        username: yup.string().required(),
+        Fname: yup.string().required(),
+        Lname: yup.string().required(),
+        gender: yup.mixed().required(),
+        cp: yup.mixed().required(),
+        adress: yup.string().required(),
+        cin: yup.number().required().positive().integer(),
+        tlf: yup.number().required().positive().integer(),
+        BirthDate: yup.date().required()
+      }),
+    []
+  )
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset
+  } = useForm({
+    defaultValues: { selectedClient },
+    mode: 'onChange',
+    resolver: yupResolver(schema)
+  })
 
   /// delete
   const [showDelete, setShowDelete] = useState(false)
   const [showUpdate, setShowUpdate] = useState(false)
   const [selectedId, setSelectedID] = useState(-1)
-  const [selectedClient, setSelectedClient] = useState(null)
 
   // Gestion de la suppression
   const handleClickDelete = row => {
@@ -172,10 +201,16 @@ const InvoiceList = ({ apiData }) => {
   }
   const handleClickUpdate = row => {
     setSelectedClient(row)
+    reset({
+      ...row,
+      cp: citiesOptions.find(option => option.value === row.cp) ?? null,
+      gender: { value: row.gender, label: row.gender },
+      BirthDate: row.BirthDate ? new Date(row.BirthDate).toISOString().split('T')[0] : ''
+    })
     console.log('row row ', row)
-    let city = cities.find(el => (el.City + ' ' + el.SubCity).toLowerCase() == row?.City.toLowerCase())
-    setCity(city ?? null)
-    setCp(city.cp)
+    // let city = cities.find(el => (el.City + ' ' + el.SubCity).toLowerCase() == row?.City.toLowerCase())
+    // setCity(city ?? null)
+    // setCp(city.cp)
 
     setShowUpdate(true)
   }
@@ -192,9 +227,15 @@ const InvoiceList = ({ apiData }) => {
   const addClinet = async data => {
     const add = await AddFunction(data)
     if (add) {
+      let body = {
+        senderEmail: 'mouezghariani2@gmail.com',
+        recipientEmail: data.email,
+        subject: 'Inscription chez Maghribia Assurance',
+        text: `Cher ${data.Fname}\n \n \n Nous sommes ravi de vous annocner que votre compte était créer avec success \n  \t username : ${data.username} \n \t mot de passe : ${data.password}\n Merci de votre conféance \n\n Cordiallement`
+      }
+      await sendEmail(body)
       const newData = await fetchData()
       setFilteredData(newData)
-      setShowDelete(false)
     }
   }
 
@@ -207,12 +248,10 @@ const InvoiceList = ({ apiData }) => {
     }
   }
   const onSubmit = data => {
-    data.City = City.City + ' ' + City.SubCity
-    data.cp = cp
-    setShowUpdate(false)
-    setCity(null)
-    setCp(null)
-    updateClient(selectedClient?.id, data)
+    console.log('mouezzzzzzzz', data)
+    let x = { ...data, City: data.cp.label, cp: data.cp.value, gender: data.gender.value }
+    console.log('xxxxxx', x)
+    updateClient(selectedClient?.id, x)
 
     reset()
   }
@@ -229,13 +268,6 @@ const InvoiceList = ({ apiData }) => {
   const [cp, setCp] = useState(null)
 
   // ** Hooks
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    watch,
-    reset
-  } = useForm()
 
   const handleFilter = val => {
     setValue(val)
@@ -301,278 +333,346 @@ const InvoiceList = ({ apiData }) => {
           <Typography variant='h6'>Gestion des Clients</Typography>
         </Grid>
         <Grid item xs={12}>
-          <DatePickerWrapper>
-            <Grid container spacing={6}>
-              <Grid item xs={12}>
-                <Card>
-                  <TableHeader
-                    value={value}
-                    selectedRows={selectedRows}
-                    handleFilter={handleFilter}
-                    Addclient={addClinet}
-                  />
-                  <DataGrid
-                    autoHeight
-                    pagination
-                    rowHeight={62}
-                    rows={filteredRows}
-                    columns={columns}
-                    disableRowSelectionOnClick
-                    pageSizeOptions={[5, 15, 25]}
-                    paginationModel={paginationModel}
-                    onPaginationModelChange={setPaginationModel}
-                    onRowSelectionModelChange={rows => setSelectedRows(rows)}
-                  />
-                  {/* deleteDialog */}
+          <Grid container spacing={6}>
+            <Grid item xs={12}>
+              <Card>
+                <TableHeader
+                  value={value}
+                  selectedRows={selectedRows}
+                  handleFilter={handleFilter}
+                  Addclient={addClinet}
+                />
+                <DataGrid
+                  autoHeight
+                  pagination
+                  rowHeight={62}
+                  rows={filteredRows}
+                  columns={columns}
+                  disableRowSelectionOnClick
+                  pageSizeOptions={[5, 15, 25]}
+                  paginationModel={paginationModel}
+                  onPaginationModelChange={setPaginationModel}
+                  onRowSelectionModelChange={rows => setSelectedRows(rows)}
+                />
+                {/* deleteDialog */}
 
-                  {/* updateDialog */}
-                  <DeleteDialog
-                    open={showDelete}
-                    onClose={() => setShowDelete(false)}
-                    onConfirm={deleteClient}
-                    selectedId={selectedId}
-                  />
-                  <Dialog
-                    fullWidth
-                    open={showUpdate}
-                    maxWidth='sm'
-                    scroll='body'
-                    onClose={() => {
-                      setShowUpdate(false)
-                      setSelectedClient(null)
-                      reset()
-                    }}
-                    TransitionComponent={Transition}
-                    onBackdropClick={() => {
-                      setShowUpdate(false)
-                      setSelectedClient(null)
-                      reset()
-                    }}
+                {/* updateDialog */}
+                <DeleteDialog
+                  open={showDelete}
+                  onClose={() => setShowDelete(false)}
+                  onConfirm={deleteClient}
+                  selectedId={selectedId}
+                />
+                <Dialog
+                  fullWidth
+                  open={showUpdate}
+                  defaultValue={selectedClient?.email}
+                  maxWidth='sm'
+                  scroll='body'
+                  onClose={() => {
+                    setShowUpdate(false)
+                    setSelectedClient(null)
+                    reset()
+                  }}
+                  TransitionComponent={Transition}
+                  onBackdropClick={() => {
+                    setShowUpdate(false)
+                    setSelectedClient(null)
+                    reset()
+                  }}
+                  sx={{
+                    '& .MuiDialog-paper': { overflow: 'visible' }
+                  }}
+                >
+                  <DialogContent
                     sx={{
-                      '& .MuiDialog-paper': { overflow: 'visible' }
+                      px: theme => [`${theme.spacing(5)} !important`, `${theme.spacing(15)} !important`],
+                      py: theme => [`${theme.spacing(8)} !important`, `${theme.spacing(12.5)} !important`]
                     }}
                   >
-                    <DialogContent
-                      sx={{
-                        px: theme => [`${theme.spacing(5)} !important`, `${theme.spacing(15)} !important`],
-                        py: theme => [`${theme.spacing(8)} !important`, `${theme.spacing(12.5)} !important`]
+                    <CustomCloseButton
+                      onClick={() => {
+                        setShowUpdate(false)
+                        setSelectedClient(null)
+                        reset()
                       }}
                     >
-                      <CustomCloseButton
-                        onClick={() => {
+                      <Icon icon='tabler:x' fontSize='1.25rem' />
+                    </CustomCloseButton>
+                    <Box sx={{ mb: 4, textAlign: 'center' }}>
+                      <Typography variant='h5' sx={{ mb: 3 }}>
+                        Modifier les informations du client
+                      </Typography>
+                    </Box>
+                    <DatePickerWrapper>
+                      <form
+                        onSubmit={handleSubmit(data => {
+                          console.log('mouezzzzzzzz', data)
+                          let x = { ...data, City: data.cp.label, cp: data.cp.value, gender: data.gender.value }
+                          console.log('xxxxxx', x)
                           setShowUpdate(false)
-                          setSelectedClient(null)
-
-                          reset()
-                        }}
+                          updateClient(selectedClient?.id, x)
+                        })}
                       >
-                        <Icon icon='tabler:x' fontSize='1.25rem' />
-                      </CustomCloseButton>
-                      <Box sx={{ mb: 4, textAlign: 'center' }}>
-                        <Typography variant='h5' sx={{ mb: 3 }}>
-                          Modifier les informations du client
-                        </Typography>
-                      </Box>
-                      <form onSubmit={handleSubmit(onSubmit)}>
-                        <Grid container spacing={2}>
-                          <Grid item xs={12}>
+                        <Controller
+                          name={'username'}
+                          control={control}
+                          render={({ field }) => (
                             <CustomTextField
+                              {...field}
+                              sx={{ mb: 4 }}
+                              variant='outlined'
+                              size='small'
                               fullWidth
-                              value={selectedClient?.Lname || ''}
-                              label='Nom'
-                              {...register('Lname', { required: true })}
-                              placeholder='Nom'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedClient({ ...selectedClient, Lname: e.target.value })}
+                              label={'Identifaint'}
+                              error={!!errors['username']}
+                              helperText={'Ce champs requis'}
+                              // helperText={errors['username']?.message}
                             />
-                            {errors.Lname && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                          </Grid>
-                          <Grid item xs={12}>
+                          )}
+                        />
+                        <Controller
+                          name={'Fname'}
+                          control={control}
+                          render={({ field }) => (
                             <CustomTextField
+                              {...field}
+                              sx={{ mb: 4 }}
+                              variant='outlined'
+                              size='small'
                               fullWidth
-                              value={selectedClient?.Fname || ''}
-                              label='Prénom'
-                              {...register('Fname', { required: true })}
-                              placeholder='Prénom'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedClient({ ...selectedClient, Fname: e.target.value })}
+                              label={'Prénom'}
+                              error={!!errors['Fname']}
+                              // helperText={errors['Fname']?.message}
+                              helperText={'Ce champs requis'}
                             />
-                            {errors.Fname && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                            {watch('Fname') && (
-                              <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>
-                                {watch('Fname').length}/50
-                              </span>
-                            )}
-                          </Grid>
-                          <Grid item xs={12}>
+                          )}
+                        />
+                        <Controller
+                          name={'Lname'}
+                          control={control}
+                          render={({ field }) => (
                             <CustomTextField
+                              {...field}
+                              sx={{ mb: 4 }}
+                              variant='outlined'
+                              size='small'
                               fullWidth
-                              value={selectedClient?.cin || ''}
-                              label='CIN'
-                              {...register('cin', { required: true })}
-                              placeholder='CIN'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedClient({ ...selectedClient, cin: e.target.value })}
+                              label={'Nom'}
+                              error={!!errors['Lname']}
+                              // helperText={errors['Lname']?.message}
+                              helperText={'Ce champs requis'}
                             />
-                            {errors.cin && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                            {watch('cin') && (
-                              <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>
-                                {watch('cin').length}/50
-                              </span>
-                            )}
-                          </Grid>
-                          <Grid item xs={12}>
+                          )}
+                        />
+                        <Controller
+                          name={'cin'}
+                          control={control}
+                          render={({ field }) => (
+                            <CustomTextField
+                              {...field}
+                              sx={{ mb: 4 }}
+                              variant='outlined'
+                              size='small'
+                              fullWidth
+                              label={'CIN'}
+                              error={!!errors['cin']}
+                              // helperText={errors['cin']?.message}
+                              helperText={'Ce champs requis'}
+                            />
+                          )}
+                        />
+                        <Controller
+                          name={'email'}
+                          control={control}
+                          render={({ field }) => (
+                            <CustomTextField
+                              {...field}
+                              sx={{ mb: 4 }}
+                              variant='outlined'
+                              size='small'
+                              fullWidth
+                              label={'Email'}
+                              error={!!errors['email']}
+                              // helperText={errors['email']?.message}
+                              helperText={'Ce champs requis'}
+                            />
+                          )}
+                        />
+                        <Controller
+                          name={'gender'}
+                          control={control}
+                          render={({ field }) => (
                             <CustomAutocomplete
-                              options={['Homme', 'Femme']}
-                              value={selectedClient?.gender}
-                              onChange={(event, val) => {
-                                setSelectedClient({ ...selectedClient, gender: val })
-                              }}
+                              options={[
+                                { label: 'Homme', value: 'Homme' },
+                                { label: 'Femme', value: 'Femme' }
+                              ]}
                               id='autocomplete-size-medium-multi'
-                              getOptionLabel={option => option}
+                              {...field}
+                              sx={{ mb: 4 }}
+                              getOptionLabel={option => option.label ?? ''}
+                              onChange={(e, v) => field.onChange(v)}
+                              isOptionEqualToValue={(option, val) => {
+                                return option.value === val.value
+                              }}
                               renderInput={params => (
                                 <CustomTextField
                                   {...params}
                                   size='small'
                                   label='Gener'
                                   placeholder='Gener'
-                                  {...register('gender', { required: true })}
+                                  error={!!errors['gender']}
+                                  // helperText={errors['gender']?.message}
+                                  helperText={'Ce champs requis'}
                                 />
                               )}
                             />
-                          </Grid>
-                          <Grid item xs={12}>
+                          )}
+                        />
+                        {/* <Controller
+                          name={'gender'}
+                          control={control}
+                          render={({ field }) => (
                             <CustomTextField
+                              {...field}
+                              variant='outlined'
+                              size='small'
                               fullWidth
-                              value={selectedClient?.email || ''}
-                              label='E-mail'
-                              {...register('email', { required: true, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ })}
-                              placeholder='E-mail'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedClient({ ...selectedClient, email: e.target.value })}
+                              label={'Gener'}
+                              error={!!errors['gender']}
+                              helperText={errors['gender']?.message}
                             />
-                            {errors.email && (
-                              <span style={{ color: 'red' }}>
-                                Ce champ est requis et doit être une adresse e-mail valide.
-                              </span>
-                            )}
-                            {watch('email') && (
-                              <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>
-                                {watch('email').length}/50
-                              </span>
-                            )}
-                          </Grid>
-                          <Grid item xs={12}>
+                          )}
+                        /> */}
+                        {/* <Controller
+                          name={'BirthDate'}
+                          control={control}
+                          render={({ field }) => (
+                            <DatePicker
+                              showYearDropdown
+                              showMonthDropdown
+                              placeholderText='DD/MM/YYYY'
+                              selected={field.value}
+                              {...field}
+                              customInput={
+                                <CustomTextField
+                                  ariant='outlined'
+                                  size='small'
+                                  fullWidth
+                                  label={'Date de Naissance'}
+                                  error={!!errors['BirthDate']}
+                                  helperText={errors['BirthDate']?.message}
+                                />
+                              }
+                            />
+                          )}
+                        /> */}
+                        <Controller
+                          name={'BirthDate'}
+                          control={control}
+                          render={({ field }) => {
+                            console.log(field)
+                            return (
+                              <CustomTextField
+                                {...field}
+                                sx={{ mb: 4 }}
+                                type='date'
+                                variant='outlined'
+                                size='small'
+                                fullWidth
+                                label={'Date de Naissance '}
+                                error={!!errors['BirthDate']}
+                                // helperText={errors['BirthDate']?.message}
+                                helperText={'Ce champs requis'}
+                              />
+                            )
+                          }}
+                        />
+                        <Controller
+                          name={'tlf'}
+                          control={control}
+                          render={({ field }) => (
                             <CustomTextField
+                              {...field}
+                              sx={{ mb: 4 }}
+                              variant='outlined'
+                              size='small'
                               fullWidth
-                              value={selectedClient?.tlf || ''}
-                              label='Numéro de Téléphone'
-                              {...register('tlf', { required: true, pattern: /^[0-9]*$/ })}
-                              placeholder='Numéro de Téléphone'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedClient({ ...selectedClient, tlf: e.target.value })}
+                              label={'Numéro de téléphone'}
+                              error={!!errors['tlf']}
+                              // helperText={errors['tlf']?.message}
+                              helperText={'Ce champs requis'}
                             />
-                            {(errors.tlf || errors.email) && (
-                              <span style={{ color: 'red' }}>
-                                Ce champ est requis et ne doit pas contenir d'alphabet.
-                              </span>
-                            )}
-                          </Grid>
-
-                          <Grid item xs={12}>
+                          )}
+                        />
+                        <Controller
+                          name={'cp'}
+                          control={control}
+                          render={({ field }) => (
                             <CustomAutocomplete
-                              options={cities}
-                              value={City}
-                              isOptionEqualToValue={(option, value) => {
-                                return (
-                                  option.City.toLowerCase() === value.City.toLowerCase() &&
-                                  option.SubCity.toLowerCase() === value.SubCity.toLowerCase()
-                                )
-                              }}
-                              onChange={(event, val) => {
-                                if (val) {
-                                  setCity(val)
-                                  setCp(val?.cp)
-                                  setSelectedClient({ ...selectedClient, City: val.City + ' ' + val.SubCity })
-                                } else {
-                                  setCp('')
-                                  setCity(null)
-                                }
-                              }}
+                              options={citiesOptions}
                               id='autocomplete-size-medium-multi'
-                              getOptionLabel={option => option.City + ' ' + option.SubCity || ''}
+                              {...field}
+                              sx={{ mb: 4 }}
+                              onChange={(e, v) => field.onChange(v)}
+                              getOptionLabel={option => {
+                                return option.label ?? ''
+                              }}
+                              isOptionEqualToValue={(option, val) => {
+                                return option.value === val.value
+                              }}
                               renderInput={params => (
                                 <CustomTextField
                                   {...params}
                                   size='small'
                                   label='Ville'
                                   placeholder='Ville'
-                                  // value={selectedClient?.City}
+                                  helperText={'Ce champs requis'}
                                 />
                               )}
                             />
-                          </Grid>
+                          )}
+                        />
 
-                          <Grid item xs={12}>
+                        <Controller
+                          name={'adress'}
+                          control={control}
+                          render={({ field }) => (
                             <CustomTextField
-                              value={cp}
+                              {...field}
+                              sx={{ mb: 4 }}
+                              variant='outlined'
+                              size='small'
                               fullWidth
-                              label='Code postale'
-                              {...register('cp', { required: true })}
-                              placeholder='Code postale'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedClient({ ...selectedClient, cp: e.target.value })}
+                              label={'Addresse '}
+                              error={!!errors['adress']}
+                              // helperText={errors['adress']?.message}
+                              helperText={'Ce champs requis'}
                             />
-                            {errors.cp && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                            {watch('cp') && (
-                              <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>
-                                {watch('cp').length}/50
-                              </span>
-                            )}
-                          </Grid>
-                          <Grid item xs={12}>
-                            <CustomTextField
-                              fullWidth
-                              value={selectedClient?.adress || ''}
-                              label='Addresse'
-                              {...register('adress', { required: true })}
-                              placeholder='Addresse'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedClient({ ...selectedClient, adress: e.target.value })}
-                            />
-                            {errors.adress && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                            {watch('adress') && (
-                              <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>
-                                {watch('adress').length}/50
-                              </span>
-                            )}
-                          </Grid>
-                          {/* Ajoutez les autres champs de saisie de la même manière */}
-                          <Grid item xs={12}>
-                            <Button variant='contained' type='submit'>
-                              Enregistrer
-                            </Button>{' '}
-                            {/* Utilisez Button avec type='submit' */}
-                          </Grid>
-                        </Grid>
+                          )}
+                        />
+                        <Button type='submit' variant='contained' color='primary' sx={{ mt: 5 }}>
+                          Soumettre
+                        </Button>
                       </form>
+                    </DatePickerWrapper>
 
-                      <Box
-                        sx={{
-                          rowGap: 2,
-                          columnGap: 4,
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      ></Box>
-                    </DialogContent>
-                  </Dialog>
-                </Card>
-              </Grid>
+                    <Box
+                      sx={{
+                        rowGap: 2,
+                        columnGap: 4,
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    ></Box>
+                  </DialogContent>
+                </Dialog>
+              </Card>
             </Grid>
-          </DatePickerWrapper>
+          </Grid>
         </Grid>
       </Grid>
     </>

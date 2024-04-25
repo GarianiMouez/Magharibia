@@ -24,7 +24,10 @@ const getById = async (req, res, next) => {
 };
 
 const create = async (req, res, next) => {
+  console.log("dddd");
   try {
+    console.log("dddd");
+
     if (req.body.password) {
       req.body.password = await hashPassword(req.body.password);
     }
@@ -47,6 +50,7 @@ const update = async (req, res, next) => {
     }
     res.sendStatus(200);
   } catch (error) {
+    console.log(error);
     next(error);
   }
 };

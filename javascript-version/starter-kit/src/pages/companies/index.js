@@ -1,12 +1,17 @@
 // ** React Imports
-import { useState, useEffect, forwardRef, Fragment } from 'react'
-import { useForm } from 'react-hook-form'
-
+import { useState, useEffect, forwardRef, Fragment, useMemo } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import * as yup from 'yup'
+import { yupResolver } from '@hookform/resolvers/yup'
 import { deleteFunction, fetchData, AddFunction, updateFunction, getByid } from 'src/APIs/campaniesApis'
 import TableHeader from './TableHeader/index'
 import axios from 'axios'
 
 import cities from 'src/views/forms/form-wizard/data/index'
+const citiesOptions = cities.map(element => ({
+  value: element.cp,
+  label: element.City + ' ' + element.SubCity
+}))
 
 // ** Next Import
 import Link from 'next/link'
@@ -72,6 +77,7 @@ import CustomTextField from 'src/@core/components/mui/text-field'
 // ** Styled Components
 import DatePickerWrapper from 'src/@core/styles/libs/react-datepicker'
 import DeleteDialog from './dialogs/deleteDialog'
+import { sendEmail } from 'src/APIs/sendEmail'
 
 // ** Styled component for the link in the dataTable
 const LinkStyled = styled(Link)(({ theme }) => ({
@@ -147,6 +153,29 @@ const InvoiceList = ({ apiData }) => {
   ///****DATA*****////
   const [filteredData, setFilteredData] = useState(apiData)
 
+  const schema = useMemo(
+    () =>
+      yup.object({
+        email: yup.string().email().required(),
+        Ename: yup.string().required(),
+        cp: yup.mixed().required(),
+        adress: yup.string().required(),
+        rne: yup.number().required().positive().integer(),
+        tlf: yup.number().required().positive().integer()
+      }),
+    []
+  )
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset
+  } = useForm({
+    defaultValues: {},
+    mode: 'onChange',
+    resolver: yupResolver(schema)
+  })
+
   /// delete
   const [showDelete, setShowDelete] = useState(false)
   const [showUpdate, setShowUpdate] = useState(false)
@@ -160,9 +189,10 @@ const InvoiceList = ({ apiData }) => {
   }
   const handleClickUpdate = row => {
     setSelectedCampany(row)
-    let city = cities.find(el => (el.City + ' ' + el.SubCity).toLowerCase() == row?.City.toLowerCase())
-    setCity(city ?? null)
-    setCp(city.cp)
+    reset({
+      ...row,
+      cp: citiesOptions.find(option => option.value === row.cp) ?? null
+    })
     setShowUpdate(true)
     console.log('row', selectedCampany)
   }
@@ -217,13 +247,6 @@ const InvoiceList = ({ apiData }) => {
   const [cp, setCp] = useState(null)
 
   // ** Hooks
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    watch,
-    reset
-  } = useForm()
 
   const handleFilter = val => {
     setValue(val)
@@ -373,148 +396,196 @@ const InvoiceList = ({ apiData }) => {
                           Modifier les informations de l'Entreprise
                         </Typography>
                       </Box>
-                      <form onSubmit={handleSubmit(onSubmit)}>
-                        <Grid container spacing={2}>
-                          <Grid item xs={12}>
-                            <CustomTextField
-                              fullWidth
-                              value={selectedCampany?.Ename || ''}
-                              label='Nom de l Entreprise'
-                              {...register('Ename', { required: true })}
-                              placeholder='Nom'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedCampany({ ...selectedCampany, Ename: e.target.value })}
-                            />
-                            {errors.Ename && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                          </Grid>
+                      <DatePickerWrapper>
+                        <form
+                          onSubmit={handleSubmit(data => {
+                            console.log('mouezzzzzzzz', data)
+                            let x = { ...data, City: data.cp.label, cp: data.cp.value }
+                            console.log('xxxxxx', x)
+                            setShowUpdate(false)
 
-                          <Grid item xs={12}>
-                            <CustomTextField
-                              fullWidth
-                              value={selectedCampany?.rne || ''}
-                              label='RNE'
-                              {...register('rne', { required: true })}
-                              placeholder='RNE'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedCampany({ ...selectedCampany, rne: e.target.value })}
-                            />
-                            {errors.cin && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                            {watch('cin') && (
-                              <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>
-                                {watch('cin').length}/50
-                              </span>
-                            )}
-                          </Grid>
-                          <Grid item xs={12}>
-                            <CustomTextField
-                              fullWidth
-                              value={selectedCampany?.email || ''}
-                              label='E-mail'
-                              {...register('email', { required: true, pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ })}
-                              placeholder='E-mail'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedCampany({ ...selectedCampany, email: e.target.value })}
-                            />
-                            {errors.email && (
-                              <span style={{ color: 'red' }}>
-                                Ce champ est requis et doit être une adresse e-mail valide.
-                              </span>
-                            )}
-                            {watch('email') && (
-                              <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>
-                                {watch('email').length}/50
-                              </span>
-                            )}
-                          </Grid>
-                          <Grid item xs={12}>
-                            <CustomTextField
-                              fullWidth
-                              value={selectedCampany?.tlf || ''}
-                              label='Numéro de Téléphone'
-                              {...register('tlf', { required: true, pattern: /^[0-9]*$/ })}
-                              placeholder='Numéro de Téléphone'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedCampany({ ...selectedCampany, tlf: e.target.value })}
-                            />
-                            {(errors.tlf || errors.email) && (
-                              <span style={{ color: 'red' }}>
-                                Ce champ est requis et ne doit pas contenir d'alphabet.
-                              </span>
-                            )}
-                          </Grid>
+                            updateCampany(selectedCampany?.id, x)
+                          })}
+                        >
+                          <Controller
+                            name={'Ename'}
+                            control={control}
+                            render={({ field }) => (
+                              <CustomTextField
+                                {...field}
+                                sx={{ mb: 4 }}
+                                variant='outlined'
+                                size='small'
+                                fullWidth
+                                label={'Nom'}
+                                error={!!errors['Ename']}
+                                helperText={'Ce champs requis'}
 
-                          <Grid item xs={12}>
-                            <CustomAutocomplete
-                              options={cities}
-                              value={city}
-                              isOptionEqualToValue={(option, value) => {
-                                return (
-                                  option.City.toLowerCase() === value.City.toLowerCase() &&
-                                  option.SubCity.toLowerCase() === value.SubCity.toLowerCase()
-                                )
-                              }}
-                              onChange={(event, val) => {
-                                setCity(val)
-                                setCp(val?.cp)
-                              }}
-                              id='autocomplete-size-medium-multi'
-                              getOptionLabel={option => option.City + ' ' + option.SubCity || ''}
-                              renderInput={params => (
+                                // helperText={errors['Ename']?.message}
+                              />
+                            )}
+                          />
+                          <Controller
+                            name={'rne'}
+                            control={control}
+                            render={({ field }) => (
+                              <CustomTextField
+                                {...field}
+                                sx={{ mb: 4 }}
+                                variant='outlined'
+                                size='small'
+                                fullWidth
+                                label={'rne'}
+                                error={!!errors['rne']}
+                                // helperText={errors['rne']?.message}
+                                helperText={'Ce champs requis'}
+                              />
+                            )}
+                          />
+                          <Controller
+                            name={'email'}
+                            control={control}
+                            render={({ field }) => (
+                              <CustomTextField
+                                {...field}
+                                sx={{ mb: 4 }}
+                                variant='outlined'
+                                size='small'
+                                fullWidth
+                                label={'Email'}
+                                error={!!errors['email']}
+                                // helperText={errors['email']?.message}
+                                helperText={'Ce champs requis'}
+                              />
+                            )}
+                          />
+                          {/* <Controller
+                            name={'gender'}
+                            control={control}
+                            render={({ field }) => (
+                              <CustomAutocomplete
+                                options={['Homme', 'Femme']}
+                                id='autocomplete-size-medium-multi'
+                                {...field}
+                                getOptionLabel={option => option}
+                                renderInput={params => (
+                                  <CustomTextField
+                                    {...params}
+                                    size='small'
+                                    label='Gener'
+                                    placeholder='Gener'
+                                    error={!!errors['gender']}
+                                    helperText={errors['gender']?.message}
+                                  />
+                                )}
+                              />
+                            )}
+                          /> */}
+                          {/* <Controller
+                          name={'gender'}
+                          control={control}
+                          render={({ field }) => (
+                            <CustomTextField
+                              {...field}
+                              variant='outlined'
+                              size='small'
+                              fullWidth
+                              label={'Gener'}
+                              error={!!errors['gender']}
+                              helperText={errors['gender']?.message}
+                            />
+                          )}
+                        /> */}
+                          {/* <Controller
+                          name={'BirthDate'}
+                          control={control}
+                          render={({ field }) => (
+                            <DatePicker
+                              showYearDropdown
+                              showMonthDropdown
+                              placeholderText='DD/MM/YYYY'
+                              selected={field.value}
+                              {...field}
+                              customInput={
                                 <CustomTextField
-                                  {...params}
+                                  ariant='outlined'
                                   size='small'
-                                  label='Ville'
-                                  placeholder='Ville'
-                                  value={selectedCampany?.City}
+                                  fullWidth
+                                  label={'Date de Naissance'}
+                                  error={!!errors['BirthDate']}
+                                  helperText={errors['BirthDate']?.message}
                                 />
-                              )}
+                              }
                             />
-                          </Grid>
-
-                          <Grid item xs={12}>
-                            <CustomTextField
-                              value={cp}
-                              fullWidth
-                              label='Code postale'
-                              {...register('cp', { required: true })}
-                              placeholder='Code postale'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedCampany({ ...selectedCampany, cp: e.target.value })}
-                            />
-                            {errors.cp && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                            {watch('cp') && (
-                              <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>
-                                {watch('cp').length}/50
-                              </span>
+                          )}
+                        /> */}
+                          <Controller
+                            name={'tlf'}
+                            control={control}
+                            render={({ field }) => (
+                              <CustomTextField
+                                {...field}
+                                sx={{ mb: 4 }}
+                                variant='outlined'
+                                size='small'
+                                fullWidth
+                                label={'Numéro de téléphone'}
+                                error={!!errors['tlf']}
+                                // helperText={errors['tlf']?.message}
+                                helperText={'Ce champs requis'}
+                              />
                             )}
-                          </Grid>
-                          <Grid item xs={12}>
-                            <CustomTextField
-                              fullWidth
-                              value={selectedCampany?.adress || ''}
-                              label='Addresse'
-                              {...register('adress', { required: true })}
-                              placeholder='Addresse'
-                              sx={{ position: 'relative' }}
-                              onChange={e => setSelectedCampany({ ...selectedCampany, adress: e.target.value })}
-                            />
-                            {errors.adress && <span style={{ color: 'red' }}>Ce champ est requis.</span>}
-                            {watch('adress') && (
-                              <span style={{ position: 'absolute', right: 0, bottom: '-20px' }}>
-                                {watch('adress').length}/50
-                              </span>
+                          />
+                          <Controller
+                            name={'cp'}
+                            control={control}
+                            render={({ field }) => (
+                              <CustomAutocomplete
+                                sx={{ mb: 4 }}
+                                options={citiesOptions}
+                                id='autocomplete-size-medium-multi'
+                                {...field}
+                                onChange={(e, v) => field.onChange(v)}
+                                getOptionLabel={option => {
+                                  return option.label ?? ''
+                                }}
+                                isOptionEqualToValue={(option, val) => {
+                                  return option.value === val.value
+                                }}
+                                renderInput={params => (
+                                  <CustomTextField
+                                    {...params}
+                                    size='small'
+                                    label='Ville'
+                                    placeholder='Ville'
+                                    helperText={'Ce champs requis'}
+                                  />
+                                )}
+                              />
                             )}
-                          </Grid>
-                          {/* Ajoutez les autres champs de saisie de la même manière */}
-                          <Grid item xs={12}>
-                            <Button variant='contained' type='submit'>
-                              Enregistrer
-                            </Button>
-                            {/* Utilisez Button avec type='submit' */}
-                          </Grid>
-                        </Grid>
-                      </form>
+                          />
 
+                          <Controller
+                            name={'adress'}
+                            control={control}
+                            render={({ field }) => (
+                              <CustomTextField
+                                {...field}
+                                variant='outlined'
+                                size='small'
+                                fullWidth
+                                label={'Addresse '}
+                                error={!!errors['adress']}
+                                // helperText={errors['adress']?.message}
+                                helperText={'Ce champs requis'}
+                              />
+                            )}
+                          />
+                          <Button type='submit' variant='contained' color='primary' sx={{ mt: 5 }}>
+                            Soumettre
+                          </Button>
+                        </form>
+                      </DatePickerWrapper>
                       <Box
                         sx={{
                           rowGap: 2,
