@@ -4,6 +4,7 @@ import ReadTextField from 'src/@core/components/mui/readOnly'
 
 import CustomAutocomplete from 'src/@core/components/mui/autocomplete'
 import CardPayement from 'src/views/forms/form-wizard/card'
+import jsPDF from 'jspdf'
 
 ///
 import { AddEcontract } from 'src/APIs/contratEntreprise'
@@ -143,6 +144,11 @@ const PContractStepper = () => {
   const [city, setCity] = useState(null)
   const [cp, setCp] = useState()
   const handlePDF = () => {
+    if (offerType === 'Personnel') {
+      handleDownloadClickPersonale()
+    } else if (offerType === 'Morale') {
+      handleDownloadClickEntreprise()
+    }
     console.log('hello pdf')
   }
 
@@ -438,29 +444,6 @@ const PContractStepper = () => {
     setChosenClient(null)
     setShip(null)
     setOfferType(type)
-  }
-
-  // Handle Password
-  const handlePasswordChange = prop => event => {
-    setState({ ...state, [prop]: event.target.value })
-  }
-
-  const handleClickShowPassword = () => {
-    setState({ ...state, showPassword: !state.showPassword })
-  }
-
-  // Handle Confirm Password
-  const handleConfirmChange = prop => event => {
-    setState({ ...state, [prop]: event.target.value })
-  }
-
-  const handleClickShowConfirmPassword = () => {
-    setState({ ...state, showPassword2: !state.showPassword2 })
-  }
-
-  // Handle Language
-  const handleSelectChange = event => {
-    setLanguage(event.target.value)
   }
 
   const getStepContent = step => {
@@ -1126,6 +1109,81 @@ const PContractStepper = () => {
     }
   }
 
+  const handleDownloadClickEntreprise = () => {
+    const doc = new jsPDF()
+
+    const imgWidth = 35
+    const imgHeight = 10
+
+    doc.addImage('/images/logo.png', 'PNG', 10, 10, imgWidth, imgHeight)
+
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const dateWidth =
+      (doc.getStringUnitWidth('Date: 01/01/2022') * doc.internal.getFontSize()) / doc.internal.scaleFactor
+    const dateX = pageWidth - dateWidth - 10
+
+    const currentDate = new Date().toLocaleDateString('fr-FR')
+    doc.text(`Date: ${currentDate}`, dateX, 10)
+
+    doc.setFont('times')
+
+    doc.setTextColor(150)
+    doc.text(`Nom de l\'Entreprise : ${ename}`, 20, 50)
+
+    doc.setTextColor(0)
+    doc.text(`Adresse : ${city.City} ${city.SubCity} - ${adress} ${cp}`, 20, 60)
+    doc.text(`CIN :  ${rne}`, 20, 70)
+    doc.text(`Numéro téléphone  :  ${tlf}`, 20, 80)
+    doc.text(`Bateau  :  ${ship.name}`, 20, 90)
+    doc.text(`Effet Au :  ${new Date(minDate).toLocaleDateString('en-GB')}`, 20, 100)
+    doc.text(`Effet Du :   ${new Date(minDate).toLocaleDateString('en-GB')}`, 20, 110)
+    doc.text(`Montant Net :  ${motor + coqu}`, 20, 120)
+    doc.text(`Montant Total :  ${motor + coqu + 10}`, 20, 130)
+    doc.text(`Mode de payement :  ${paimentType}`, 20, 140)
+
+    doc.text('Signature du Entreprise', 20, doc.internal.pageSize.getHeight() - 20)
+    doc.text('Signature de Maghrebia', pageWidth - 70, doc.internal.pageSize.getHeight() - 20)
+
+    doc.save('Contrat.pdf')
+  }
+  const handleDownloadClickPersonale = () => {
+    const doc = new jsPDF()
+
+    const imgWidth = 35
+    const imgHeight = 10
+
+    doc.addImage('/images/logo.png', 'PNG', 10, 10, imgWidth, imgHeight)
+
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const dateWidth =
+      (doc.getStringUnitWidth('Date: 01/01/2022') * doc.internal.getFontSize()) / doc.internal.scaleFactor
+    const dateX = pageWidth - dateWidth - 10
+
+    const currentDate = new Date().toLocaleDateString('fr-FR')
+    doc.text(`Date: ${currentDate}`, dateX, 10)
+
+    doc.setFont('times')
+
+    doc.setTextColor(150)
+    doc.text('Nom et Prénom', 20, 50)
+    doc.setTextColor(0)
+    doc.text(`${lastName} ${firstName}`, 60, 50)
+    doc.setTextColor(0)
+    doc.text(`Adresse : ${city.City} ${city.SubCity} ${adress} ${cp}`, 20, 60)
+    doc.text(`CIN :  ${cin}`, 20, 70)
+    doc.text(`Numéro téléphone  :  ${tlf}`, 20, 80)
+    doc.text(`Bateau  :  ${ship.name}`, 20, 90)
+    doc.text(`Effet Au :  ${new Date(minDate).toLocaleDateString('en-GB')}`, 20, 100)
+    doc.text(`Effet Du :   ${new Date(minDate).toLocaleDateString('en-GB')}`, 20, 110)
+    doc.text(`Montant Net :  ${motor + coqu}`, 20, 120)
+    doc.text(`Montant Total :  ${motor + coqu + 10}`, 20, 130)
+    doc.text(`Mode de payement :  ${paimentType}`, 20, 140)
+
+    doc.text('Signature du client', 20, doc.internal.pageSize.getHeight() - 20)
+    doc.text('Signature de Maghrebia', pageWidth - 70, doc.internal.pageSize.getHeight() - 20)
+
+    doc.save('Contrat.pdf')
+  }
   return (
     <Card>
       <CardContent>
